@@ -13,3 +13,6 @@ local shared objects http://en.wikipedia.org/wiki/Local_Shared_Object
 
 Lot's of ideas here, like Firefox Components object:
 http://www.defcon.org/images/defcon-17/dc-17-presentations/defcon-17-gregory_fleischer-attacking_tor.pdf
+
+for getting plugins:
+http://www.pinlady.net/PluginDetect/
