@@ -14,7 +14,15 @@
     whorls.cookiesenabled = navigator.cookieEnabled;
     whorls.localstorage = !!localStorage;
     whorls.sessionstorage = !!sessionStorage;
-    console.log(whorls);
 
+    $.ajax({
+        url: '/identify', 
+        processData: false,
+        type: "POST", 
+        data: JSON.stringify(whorls),
+        success: function(response){
+	    window.console.log(response);
+        }
+    });
 
 })();
