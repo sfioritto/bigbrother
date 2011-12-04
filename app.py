@@ -1,0 +1,16 @@
+import os
+import tornado.ioloop
+import tornado.web
+
+settings = {
+    "static_path": os.path.join(os.path.dirname(__file__), "static")
+}
+
+application = tornado.web.Application([
+    (r"/(tester\.html)", tornado.web.StaticFileHandler,
+     dict(path=settings['static_path'])),
+])
+
+if __name__ == "__main__":
+    application.listen(8080)
+    tornado.ioloop.IOLoop.instance().start()
