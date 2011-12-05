@@ -2,4 +2,6 @@
 /lib
 /share
 /include
+/build
+/env
 *.pyc
