@@ -1,14 +1,16 @@
 import config
 from sqlalchemy import create_engine
 from sqlalchemy.ext.declarative import declarative_base
-from sqlalchemy.orm import sessionmaker
+from sqlalchemy.orm import sessionmaker, scoped_session
 from sqlalchemy import Column, ForeignKey, Integer, String
 
 
 Base = declarative_base()
 
 engine = create_engine(config.dbconnection)
-Session = sessionmaker(bind=engine, autocommit=False, autoflush=False)
+Session = scoped_session(sessionmaker(bind=engine, 
+                                      autocommit=False, 
+                                      autoflush=False))
 
 class Identity(Base):
     __tablename__ = 'identities'

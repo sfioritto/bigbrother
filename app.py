@@ -3,7 +3,6 @@ import tornado.ioloop
 import tornado.web
 import json
 from models import Whorl, engine, Session
-from sqlalchemy.orm import scoped_session
 from hashlib import sha512
 from sqlalchemy.orm.exc import NoResultFound
 
@@ -12,8 +11,6 @@ from sqlalchemy.orm.exc import NoResultFound
 class Application(tornado.web.Application):
 
     def __init__(self):
-
-        self.session = scoped_session(Session)
 
         settings = {
             "static_path": os.path.join(os.path.dirname(__file__), "static")
@@ -31,9 +28,13 @@ class Application(tornado.web.Application):
 
 class BaseHandler(tornado.web.RequestHandler):
 
-    @property
-    def session(self):
-        return self.application.session
+    def __init__(self, *args, **kwargs):
+        self.session = Session()
+        tornado.web.RequestHandler.__init__(self, *args, **kwargs)
+
+
+    def finish(self, *args, **kwargs):
+        return tornado.web.RequestHandler.finish(self, *args, **kwargs)
 
 
 def create_hashes(whorls):
@@ -52,6 +53,22 @@ def create_hashes(whorls):
     #todo: probably shouldn't assume these will all be unique.
     #don't assume the input is clean
     return hashes
+
+
+
+    def get_create_whorls(self, whorls):
+        pass
+
+    
+    def possible_identities(self, whorls):
+        pass
+
+
+    def ranked_identities(self, identities):
+        pass
+
+
+
 
 
 class Identify(BaseHandler):
@@ -74,19 +91,6 @@ class Identify(BaseHandler):
                 self.write("new value")
 
         self.session.commit()
-
-
-    def get_create_whorls(self, whorls):
-        pass
-
-    
-    def possible_identities(self, whorls):
-        pass
-
-
-    def ranked_identities(self, identities):
-        pass
-
 
 
 
