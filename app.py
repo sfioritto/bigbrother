@@ -36,18 +36,37 @@ class BaseHandler(tornado.web.RequestHandler):
         return self.application.session
 
 
+def create_hashes(whorls):
+
+    hashes = []
+    test = {}
+    for key, value in whorls.items():
+        if key == "plugins":
+            for blob in value:
+                hashed = sha512("plugin" + str(blob)).hexdigest()
+                hashes.append(hashed)
+        else:
+            hashed = sha512(key + str(value)).hexdigest()
+            hashes.append(hashed)
+
+    #todo: probably shouldn't assume these will all be unique.
+    #don't assume the input is clean
+    return hashes
+
 
 class Identify(BaseHandler):
 
     def post(self):
-        whorls = json.loads(self.request.body)
-        for key, value in whorls.items():
-            hashed = sha512(key + str(value)).hexdigest()
 
+        whorls = []
+        whorls.extend(json.loads(self.request.body).items())
+        whorls.append(("supports http 1.1",self.request.supports_http_1_1()))
+        whorls.extend(self.request.headers.items())
+
+        for hashed in create_hashes(dict(whorls)):
             try:
                 whorl = self.session.query(Whorl).filter_by(key=hashed).one()
                 whorl.count = whorl.count + 1
-                self.write("found old value")
 
             except NoResultFound:
                 whorl = Whorl(key=hashed)
@@ -55,6 +74,19 @@ class Identify(BaseHandler):
                 self.write("new value")
 
         self.session.commit()
+
+
+    def get_create_whorls(self, whorls):
+        pass
+
+    
+    def possible_identities(self, whorls):
+        pass
+
+
+    def ranked_identities(self, identities):
+        pass
+
 
 
 
