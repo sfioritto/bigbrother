@@ -37,21 +37,27 @@ class BaseHandler(tornado.web.RequestHandler):
         return tornado.web.RequestHandler.finish(self, *args, **kwargs)
 
 
-def create_hashes(whorls):
-
+def create_hashes(whorls, prefix=None):
+    
     hashes = []
-    test = {}
-    for key, value in whorls.items():
-        if key == "plugins":
-            for blob in value:
-                hashed = sha512("plugin" + str(blob)).hexdigest()
-                hashes.append(hashed)
-        else:
-            hashed = sha512(key + str(value)).hexdigest()
-            hashes.append(hashed)
 
-    #todo: probably shouldn't assume these will all be unique.
-    #don't assume the input is clean
+    for key, value in whorls.items():
+
+        if prefix:
+            key = prefix + ":" + key
+            
+        if type(value) == dict:
+            hashes.extend(create_hashes(value, prefix=key))
+            
+        elif type(value) == list:
+            for item in value:
+                hashes.extend(create_hashes(item, prefix=key))
+                
+        else:
+            hashes.append((key,
+                            value,
+                            sha512(key + str(value)).hexdigest()))
+
     return hashes
 
 
@@ -80,14 +86,15 @@ class Identify(BaseHandler):
         whorls.append(("supports http 1.1",self.request.supports_http_1_1()))
         whorls.extend(self.request.headers.items())
 
-        for hashed in create_hashes(dict(whorls)):
+        for key, value, hashed in create_hashes(dict(whorls)):
             try:
-                whorl = self.session.query(Whorl).filter_by(key=hashed).one()
+                whorl = self.session.query(Whorl).filter_by(hashed=hashed).one()
                 whorl.count = whorl.count + 1
 
             except NoResultFound:
-                whorl = Whorl(key=hashed)
+                whorl = Whorl(hashed=hashed, key=key, value=value)
                 self.session.add(whorl)
+                self.session.flush()
                 self.write("new value")
 
         self.session.commit()

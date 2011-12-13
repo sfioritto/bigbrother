@@ -2,11 +2,13 @@
 
     
     var parsePlugin = function(plugin){
-	return plugin.description + plugin.filename + plugin.name + plugin.version
+	return {name: plugin.name,
+		      description: plugin.description,
+		      filename: plugin.filename,
+		      version: plugin.version}
     },
 
-    whorls = {};//just make this a list of k, v pairs, blow up plugin and screen
-//objects with screenresolution1000px, screenwidth100px, pluginjibberish here, etc.
+    whorls = {};
     
     whorls.useragent = navigator.userAgent
     whorls.plugins = _.map(navigator.plugins, parsePlugin);
@@ -15,7 +17,7 @@
     whorls.cookiesenabled = navigator.cookieEnabled;
     whorls.localstorage = !!localStorage;
     whorls.sessionstorage = !!sessionStorage;
-    window.console.log(whorls)
+    console.log(whorls);
     $.ajax({
         url: '/identify', 
         processData: false,
