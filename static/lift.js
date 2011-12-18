@@ -10,7 +10,6 @@
 
     whorls = {};
     
-    whorls.useragent = navigator.userAgent
     whorls.plugins = _.map(navigator.plugins, parsePlugin);
     whorls.timezone = (new Date()).getTimezoneOffset();
     whorls.screen = screen;
@@ -24,7 +23,7 @@
         type: "POST", 
         data: JSON.stringify(whorls),
         success: function(response){
-	    window.console.log(response);
+	    console.log(response);
         }
     });
 

@@ -2,7 +2,8 @@ import os
 import tornado.ioloop
 import tornado.web
 import json
-from models import Whorl, engine, Session
+from tornado.web import url, RequestHandler, StaticFileHandler
+from models import Whorl, engine, Session, Appearance
 from hashlib import sha512
 from sqlalchemy.orm.exc import NoResultFound
 
@@ -19,22 +20,23 @@ class Application(tornado.web.Application):
 
         handlers = [
             (r"/identify", Identify),
-            (r"/(tester\.html)", tornado.web.StaticFileHandler,
+            (r"/(tester\.html)", StaticFileHandler,
              dict(path=settings['static_path']))]
 
 
         tornado.web.Application.__init__(self, handlers, **settings)
+        
 
 
-class BaseHandler(tornado.web.RequestHandler):
+class BaseHandler(RequestHandler):
 
     def __init__(self, *args, **kwargs):
         self.session = Session()
-        tornado.web.RequestHandler.__init__(self, *args, **kwargs)
+        RequestHandler.__init__(self, *args, **kwargs)
 
 
     def finish(self, *args, **kwargs):
-        return tornado.web.RequestHandler.finish(self, *args, **kwargs)
+        return RequestHandler.finish(self, *args, **kwargs)
 
 
 def create_hashes(whorls, prefix=None):
@@ -61,19 +63,8 @@ def create_hashes(whorls, prefix=None):
     return hashes
 
 
-
-    def get_create_whorls(self, whorls):
-        pass
-
-    
-    def possible_identities(self, whorls):
-        pass
-
-
-    def ranked_identities(self, identities):
-        pass
-
-
+def learn(whorls, id):
+    pass
 
 
 
@@ -81,25 +72,57 @@ class Identify(BaseHandler):
 
     def post(self):
 
-        whorls = []
-        whorls.extend(json.loads(self.request.body).items())
-        whorls.append(("supports http 1.1",self.request.supports_http_1_1()))
-        whorls.extend(self.request.headers.items())
+        rawdata = []
+        rawdata.extend(json.loads(self.request.body).items())
+        rawdata.append(("supports http 1.1",self.request.supports_http_1_1()))
+        rawdata.extend(self.request.headers.items())
 
-        for key, value, hashed in create_hashes(dict(whorls)):
+        whorls = self.create_get_whorls(rawdata)
+        id = self.identify_from(whorls)
+
+        if id:
+            learn(whorls, id)
+            
+        self.session.commit()
+
+
+    def identify_appearances(self, appearances, id):
+
+        for appearance in appearances:
+            appearance
+            for whorl in appearance.whorls:
+                try:
+                    wgi = self.session.query(WhorlGivenIdentity)
+                    .filter_by(whorl_hashed=whorl.hashed)
+                    .filter_by(identity_id=id.id)
+                    .one()
+                    wgi.count = wgi.count + 1
+                    
+                except NoResultFound:
+                    wgi = WhorlGivenIdentity(whorl_hashed = whorl.hashed,
+                                             identity_id=id.id)
+                    self.session.add(wgi)
+                    self.session.flush()
+        
+
+    def create_get_whorls(self, rawdata):
+
+        whorls = []
+
+        for key, value, hashed in create_hashes(dict(rawdata)):
             try:
                 whorl = self.session.query(Whorl).filter_by(hashed=hashed).one()
-                whorl.count = whorl.count + 1
 
             except NoResultFound:
                 whorl = Whorl(hashed=hashed, key=key, value=value)
                 self.session.add(whorl)
                 self.session.flush()
-                self.write("new value")
 
-        self.session.commit()
+            whorls.append(whorl)
 
+        return whorls
 
+        
 
 if __name__ == "__main__":
     application = Application()

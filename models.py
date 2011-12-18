@@ -1,8 +1,8 @@
 import who.config as config
 from sqlalchemy import create_engine
 from sqlalchemy.ext.declarative import declarative_base
-from sqlalchemy.orm import sessionmaker, scoped_session
-from sqlalchemy import Column, ForeignKey, Integer, String, Text
+from sqlalchemy.orm import sessionmaker, scoped_session, relationship
+from sqlalchemy import Column, ForeignKey, Integer, String, Text, Table
 
 
 Base = declarative_base()
@@ -11,6 +11,7 @@ engine = create_engine(config.dbconnection)
 Session = scoped_session(sessionmaker(bind=engine, 
                                       autocommit=False, 
                                       autoflush=False))
+
 
 class Identity(Base):
     __tablename__ = 'identities'
@@ -24,11 +25,11 @@ class Whorl(Base):
     value = Column(Text)
     count = Column(Integer, default=1)
 
-    
+
 class WhorlGivenIdentity(Base):
     __tablename__ = 'whorl_given_identity'
     whorl_hashed = Column(String(128), ForeignKey('whorls.hashed'), primary_key=True)
     identity_id = Column(Integer, ForeignKey('identities.id'), primary_key=True)
     count = Column(Integer, default=0)
-
+    
 
