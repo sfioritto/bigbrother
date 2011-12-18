@@ -3,7 +3,7 @@ import tornado.ioloop
 import tornado.web
 import json
 from tornado.web import url, RequestHandler, StaticFileHandler
-from models import Whorl, engine, Session, Appearance
+from models import Whorl, WhorlGivenIdentity, engine, Session, Identity
 from hashlib import sha512
 from sqlalchemy.orm.exc import NoResultFound
 
@@ -106,22 +106,20 @@ def learn(whorls, identity, session):
     for whorl in whorls:
         whorl.count = whorl.count + 1
         try:
-            wgi = session.query(WhorlGivenIdentity)
-            .filter(whorl_hashed=whorl.hashed)
-            .filter(identity_id=identity.id)
-            .one()
+            wgi = session.query(WhorlGivenIdentity).filter_by(whorl_hashed=whorl.hashed).filter_by(identity_id=identity.id).one()
             wgi.count = wgi.count + 1
             
         except NoResultFound:
             wgi = WhorlGivenIdentity(whorl_hashed=whorl.hashed,
                                      identity_id = identity.id)
             session.add(wgi)
+            session.flush()
                 
 
-def build_raw_data(request):
+def build_raw_data(request, partial):
 
         rawdata = []
-        rawdata.extend(json.loads(request.body).items())
+        rawdata.extend(partial.items())
         rawdata.append(("supports http 1.1", request.supports_http_1_1()))
         rawdata.extend(request.headers.items())
 
@@ -131,7 +129,7 @@ def build_raw_data(request):
 def get_user(username, session):
 
     try:
-        return session.query(Identity).filter(username=username).one()
+        return session.query(Identity).filter_by(username=username).one()
     except NoResultFound:
         session.add(Identity(username=username))
         session.flush()
@@ -139,9 +137,10 @@ def get_user(username, session):
 class Tag(BaseHandler):
 
     def post(self):
-        username = self.request.body["username"]
-        identity = get_user(username, session)
-        rawdata = build_raw_data(self.request)
+        partial = json.loads(self.request.body)
+        rawdata = build_raw_data(self.request, partial)
+        username = partial["username"]
+        identity = get_user(username, self.session)
         whorls = self.create_get_whorls(rawdata)
         learn(whorls, identity, self.session)
         self.session.commit()
@@ -150,18 +149,22 @@ class Tag(BaseHandler):
 class Identify(BaseHandler):
 
     def post(self):
-        rawdata = build_raw_data(self.request)
+        partial = json.loads(self.request.body) # as in partial fingerprint
+        rawdata = build_raw_data(self.request, partial)
         whorls = self.get_whorls(rawdata)
         identity = self.identify_from(whorls)
-        self.write(identity)
-        self.session.commit()
+
+        if identity:
+            self.write(str(identity))
+        else:
+            self.write("I dunno.")
 
 
     def identify_from(self, whorls):
         return None
         # identities = {}
         # for whorl in whorls:
-            # wgi = self.session.query(WhorlGivenIdentity).filter(whorl_hashed=whorl.hashed).all()
+            # wgi = self.session.query(WhorlGivenIdentity).filter_by(whorl_hashed=whorl.hashed).all()
             
 
         
