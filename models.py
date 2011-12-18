@@ -16,6 +16,7 @@ Session = scoped_session(sessionmaker(bind=engine,
 class Identity(Base):
     __tablename__ = 'identities'
     id = Column(Integer, primary_key=True)
+    username = Column(String(500), unique=True)
 
 
 class Whorl(Base):

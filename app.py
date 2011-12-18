@@ -20,6 +20,7 @@ class Application(tornado.web.Application):
 
         handlers = [
             (r"/identify", Identify),
+            (r"/tag", Tag),
             (r"/(tester\.html)", StaticFileHandler,
              dict(path=settings['static_path']))]
 
@@ -33,6 +34,39 @@ class BaseHandler(RequestHandler):
     def __init__(self, *args, **kwargs):
         self.session = Session()
         RequestHandler.__init__(self, *args, **kwargs)
+
+
+    def get_whorls(self, rawdata):
+
+        whorls = []
+
+        for key, value, hashed in create_hashes(dict(rawdata)):
+            try:
+                whorl = self.session.query(Whorl).filter_by(hashed=hashed).one()
+                whorls.append(whorls)
+                
+            except NoResultFound:
+                pass
+            
+        return whorls
+        
+    def create_get_whorls(self, rawdata):
+        
+        whorls = []
+
+        for key, value, hashed in create_hashes(dict(rawdata)):
+            try:
+                whorl = self.session.query(Whorl).filter_by(hashed=hashed).one()
+
+            except NoResultFound:
+                whorl = Whorl(hashed=hashed, key=key, value=value)
+                self.session.add(whorl)
+                self.session.flush()
+                
+            whorls.append(whorl)
+
+        return whorls
+
 
 
     def finish(self, *args, **kwargs):
@@ -63,64 +97,72 @@ def create_hashes(whorls, prefix=None):
     return hashes
 
 
-def learn(whorls, id):
-    pass
+def learn(whorls, identity, session):
+    
+    """
+    increment the count for whorlGivenId probability and whorl
+    """
+    
+    for whorl in whorls:
+        whorl.count = whorl.count + 1
+        try:
+            wgi = session.query(WhorlGivenIdentity)
+            .filter(whorl_hashed=whorl.hashed)
+            .filter(identity_id=identity.id)
+            .one()
+            wgi.count = wgi.count + 1
+            
+        except NoResultFound:
+            wgi = WhorlGivenIdentity(whorl_hashed=whorl.hashed,
+                                     identity_id = identity.id)
+            session.add(wgi)
+                
 
+def build_raw_data(request):
+
+        rawdata = []
+        rawdata.extend(json.loads(request.body).items())
+        rawdata.append(("supports http 1.1", request.supports_http_1_1()))
+        rawdata.extend(request.headers.items())
+
+        return rawdata
+
+
+def get_user(username, session):
+
+    try:
+        return session.query(Identity).filter(username=username).one()
+    except NoResultFound:
+        session.add(Identity(username=username))
+        session.flush()
+
+class Tag(BaseHandler):
+
+    def post(self):
+        username = self.request.body["username"]
+        identity = get_user(username, session)
+        rawdata = build_raw_data(self.request)
+        whorls = self.create_get_whorls(rawdata)
+        learn(whorls, identity, self.session)
+        self.session.commit()
 
 
 class Identify(BaseHandler):
 
     def post(self):
-
-        rawdata = []
-        rawdata.extend(json.loads(self.request.body).items())
-        rawdata.append(("supports http 1.1",self.request.supports_http_1_1()))
-        rawdata.extend(self.request.headers.items())
-
-        whorls = self.create_get_whorls(rawdata)
-        id = self.identify_from(whorls)
-
-        if id:
-            learn(whorls, id)
-            
+        rawdata = build_raw_data(self.request)
+        whorls = self.get_whorls(rawdata)
+        identity = self.identify_from(whorls)
+        self.write(identity)
         self.session.commit()
 
 
-    def identify_appearances(self, appearances, id):
-
-        for appearance in appearances:
-            appearance
-            for whorl in appearance.whorls:
-                try:
-                    wgi = self.session.query(WhorlGivenIdentity)
-                    .filter_by(whorl_hashed=whorl.hashed)
-                    .filter_by(identity_id=id.id)
-                    .one()
-                    wgi.count = wgi.count + 1
-                    
-                except NoResultFound:
-                    wgi = WhorlGivenIdentity(whorl_hashed = whorl.hashed,
-                                             identity_id=id.id)
-                    self.session.add(wgi)
-                    self.session.flush()
-        
-
-    def create_get_whorls(self, rawdata):
-
-        whorls = []
-
-        for key, value, hashed in create_hashes(dict(rawdata)):
-            try:
-                whorl = self.session.query(Whorl).filter_by(hashed=hashed).one()
-
-            except NoResultFound:
-                whorl = Whorl(hashed=hashed, key=key, value=value)
-                self.session.add(whorl)
-                self.session.flush()
-
-            whorls.append(whorl)
-
-        return whorls
+    def identify_from(self, whorls):
+        return None
+        # identities = {}
+        # for whorl in whorls:
+            # wgi = self.session.query(WhorlGivenIdentity).filter(whorl_hashed=whorl.hashed).all()
+            
 
         
 
