@@ -12,11 +12,18 @@ Session = scoped_session(sessionmaker(bind=engine,
                                       autocommit=False, 
                                       autoflush=False))
 
+class Stat(Base):
+    __tablename__ = 'stats'
+    key = Column(String(100), primary_key=True)
+    value = Column(Integer, default=0)
+
 
 class Identity(Base):
     __tablename__ = 'identities'
     id = Column(Integer, primary_key=True)
     username = Column(String(500), unique=True)
+    whorl_identities = relationship("WhorlIdentity", backref="identity")
+    count = Column(Integer, default=1)
 
 
 class Whorl(Base):
@@ -27,8 +34,8 @@ class Whorl(Base):
     count = Column(Integer, default=1)
 
 
-class WhorlGivenIdentity(Base):
-    __tablename__ = 'whorl_given_identity'
+class WhorlIdentity(Base):
+    __tablename__ = 'whorl_identity'
     whorl_hashed = Column(String(128), ForeignKey('whorls.hashed'), primary_key=True)
     identity_id = Column(Integer, ForeignKey('identities.id'), primary_key=True)
     count = Column(Integer, default=0)

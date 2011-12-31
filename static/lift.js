@@ -16,8 +16,14 @@
     whorls.cookiesenabled = navigator.cookieEnabled;
     whorls.localstorage = !!localStorage;
     whorls.sessionstorage = !!sessionStorage;
-    whorls.username = "sean"
-    console.log(whorls);
+
+    if (navigator.userAgent === "Mozilla/5.0 (Macintosh; Intel Mac OS X 10.7; rv:7.0.1) Gecko/20100101 Firefox/7.0.1"){
+	whorls.username = "firefox"
+    } else {
+	whorls.username = "chrome"
+    }
+
+    console.log(whorls.username);
     $.ajax({
         url: '/tag', 
         processData: false,
