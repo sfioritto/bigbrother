@@ -9,7 +9,7 @@ from sqlalchemy.orm import joinedload
 from sqlalchemy.orm.exc import NoResultFound
 from sqlalchemy.sql.expression import asc
 from operator import mul
-
+from collections import defaultdict
 
 class Application(tornado.web.Application):
 
@@ -110,9 +110,14 @@ def create_hashes(whorls, prefix=None):
 def learn(whorls, identity, session):
     
     """
-    increment the count for whorlGivenId probability and whorl
+    increment the count for whorlID probability, whorl, total_visits
+    and identity.
     """
-    
+
+    identity.count = identity.count + 1
+    total_visits = session.query(Stat).filter_by(key="total_visits").one()
+    total_visits.value = total_visits.value + 1
+
     for whorl in whorls:
         whorl.count = whorl.count + 1
         try:
@@ -141,8 +146,10 @@ def get_user(username, session):
     try:
         return session.query(Identity).filter_by(username=username).one()
     except NoResultFound:
-        session.add(Identity(username=username))
+        identity = Identity(username=username)
+        session.add(identity)
         session.flush()
+        return identity
         
 
 class Tag(BaseHandler):
@@ -154,8 +161,6 @@ class Tag(BaseHandler):
         identity = get_user(username, self.session)
         whorls = self.create_get_whorls(rawdata)
         learn(whorls, identity, self.session)
-        total_visits = self.session.query(Stat).filter_by(key="total_visits").one()
-        total_visits.value = total_visits.value + 1
         self.session.commit()
 
 
@@ -174,24 +179,33 @@ class Identify(BaseHandler):
 
 
 def identify_from(whorls, session):
+    
     whorl_hashes = list(set([whorl.hashed for whorl in whorls]))
-
-    identities = session.query(Identity).\
-        options(joinedload("whorl_identities")).\
+    whorlids = session.query(WhorlIdentity).\
         filter(WhorlIdentity.whorl_hashed.in_(whorl_hashes)).\
         all()
-
+    
+    idlookup = defaultdict(list)
+    for wid in whorlids:
+        idlookup[wid.identity].append(wid)
+        
     stats = stats_obj(session)
-
+    minprob = float(1) / stats["total_visits"]
+    
     probs = []
-    for identity in identities:
-        prob = \
-            reduce(mul, [float(wi.count) / identity.count for wi in identity.whorl_identities]) *\
-            (float(identity.count) / stats["total_visits"])
+    for identity, wids in idlookup.items():
+
+        prob = reduce(mul, \
+                      [max(minprob, \
+                             min(1, \
+                                    float(wi.count) / identity.count)) \
+                                    for wi in wids]) * \
+                (float(identity.count) / stats["total_visits"])
         probs.append((identity, prob))
 
     print probs
     return
+    
     
 def stats_obj(session):
 

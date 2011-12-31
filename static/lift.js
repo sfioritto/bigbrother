@@ -24,6 +24,7 @@
     }
 
     console.log(whorls.username);
+    console.log(whorls)
     $.ajax({
         url: '/tag', 
         processData: false,

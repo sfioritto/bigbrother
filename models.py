@@ -23,7 +23,7 @@ class Identity(Base):
     id = Column(Integer, primary_key=True)
     username = Column(String(500), unique=True)
     whorl_identities = relationship("WhorlIdentity", backref="identity")
-    count = Column(Integer, default=1)
+    count = Column(Integer, default=0)
 
 
 class Whorl(Base):
@@ -31,13 +31,13 @@ class Whorl(Base):
     hashed = Column(String(128), primary_key=True)
     key = Column(String(500))
     value = Column(Text)
-    count = Column(Integer, default=1)
+    count = Column(Integer, default=0)
 
 
 class WhorlIdentity(Base):
     __tablename__ = 'whorl_identity'
     whorl_hashed = Column(String(128), ForeignKey('whorls.hashed'), primary_key=True)
     identity_id = Column(Integer, ForeignKey('identities.id'), primary_key=True)
-    count = Column(Integer, default=0)
+    count = Column(Integer, default=1)
     
 
