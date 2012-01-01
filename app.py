@@ -183,7 +183,9 @@ def identify_from(whorls, session):
     stats = stats_obj(session)
     minprob = float(1) / stats["total_visits"]
     whorl_hashes = list(set([whorl.hashed for whorl in whorls]))
-    
+
+    # this is a dictionary of dictionaries. The inner dictionaries
+    # contain probabilities of the whorl given the user.
     whorlids = defaultdict(lambda : defaultdict(lambda : minprob))
     for wid in session.query(WhorlIdentity).\
         filter(WhorlIdentity.whorl_hashed.in_(whorl_hashes)).\
@@ -192,18 +194,30 @@ def identify_from(whorls, session):
         whorlids[wid.identity][wid.whorl_hashed] =\
             min(1, float(wid.count) / wid.identity.count)
 
+    # The probabilities above are then used to create a list
+    # of probabilities per user for every whorl passed in.
+    # The inner dictionary above defaults to a reasonable
+    # minimum if we've never seen a whorl for a given user
     givenid = defaultdict(list)
     for identity, idprobs in whorlids.items():
         for whorl in whorls:
             givenid[identity].append(idprobs[whorl.hashed])
 
+    # These are all the probabilities put into a list of tuples so
+    # it can be sorted by probability.
     probs = [(\
+               # calculate the posterior probability p(whorl|identity)p(identity)
                reduce(mul, idprobs) * (float(identity.count) / stats["total_visits"]),\
+
+               # identity id as a tie breaker in sorting. this is arbitrary. If there
+               # is a tie, we just guess. could put a random number here I suppose.
                identity.id,\
+
+               # the identity tied to this probability.
                identity) \
+               
                for identity, idprobs in givenid.items()]
 
-    for p in probs: print p[2].username, p[0]
     probs.sort()
     return probs[-1][2] # the most likely identity (third element is the identity)
     
