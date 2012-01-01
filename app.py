@@ -173,7 +173,7 @@ class Identify(BaseHandler):
         identity = identify_from(whorls, self.session)
 
         if identity:
-            self.write(str(identity))
+            self.write(str(identity.username))
         else:
             self.write("I dunno.")
 
@@ -181,30 +181,41 @@ class Identify(BaseHandler):
 def identify_from(whorls, session):
     
     whorl_hashes = list(set([whorl.hashed for whorl in whorls]))
-    whorlids = session.query(WhorlIdentity).\
+    whorlids = dict([ ((wi.identity, wi.whorl_hashed), wi) \
+                      for wi in \
+                      session.query(WhorlIdentity).\
+                      filter(WhorlIdentity.whorl_hashed.in_(whorl_hashes)).\
+                      all() ])
+
+    identities = session.query(Identity).\
+        join(WhorlIdentity.identity).\
         filter(WhorlIdentity.whorl_hashed.in_(whorl_hashes)).\
         all()
-    
-    idlookup = defaultdict(list)
-    for wid in whorlids:
-        idlookup[wid.identity].append(wid)
-        
+
     stats = stats_obj(session)
     minprob = float(1) / stats["total_visits"]
+
+    givenid = defaultdict(list)
+    for identity in identities:
+        for whorl in whorls:
+            if whorlids.has_key((identity, whorl.hashed)):
+                wi = whorlids[(identity, whorl.hashed)]
+                prob = min(1, \
+                           float(wi.count) / identity.count)
+            else:
+                prob = minprob
+
+            givenid[identity].append(prob)
+
+    probs = [(\
+               reduce(mul, idprobs) * (float(identity.count) / stats["total_visits"]),\
+               identity.id,\
+               identity) \
+               for identity, idprobs in givenid.items()]
+
     
-    probs = []
-    for identity, wids in idlookup.items():
-
-        prob = reduce(mul, \
-                      [max(minprob, \
-                             min(1, \
-                                    float(wi.count) / identity.count)) \
-                                    for wi in wids]) * \
-                (float(identity.count) / stats["total_visits"])
-        probs.append((identity, prob))
-
-    print probs
-    return
+    probs.sort()
+    return probs[-1][2] # the most likely identity (third element is the identity)
     
     
 def stats_obj(session):
