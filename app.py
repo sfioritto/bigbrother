@@ -180,32 +180,22 @@ class Identify(BaseHandler):
 
 def identify_from(whorls, session):
     
-    whorl_hashes = list(set([whorl.hashed for whorl in whorls]))
-    whorlids = dict([ ((wi.identity, wi.whorl_hashed), wi) \
-                      for wi in \
-                      session.query(WhorlIdentity).\
-                      filter(WhorlIdentity.whorl_hashed.in_(whorl_hashes)).\
-                      all() ])
-
-    identities = session.query(Identity).\
-        join(WhorlIdentity.identity).\
-        filter(WhorlIdentity.whorl_hashed.in_(whorl_hashes)).\
-        all()
-
     stats = stats_obj(session)
     minprob = float(1) / stats["total_visits"]
+    whorl_hashes = list(set([whorl.hashed for whorl in whorls]))
+    
+    whorlids = defaultdict(lambda : defaultdict(lambda : minprob))
+    for wid in session.query(WhorlIdentity).\
+        filter(WhorlIdentity.whorl_hashed.in_(whorl_hashes)).\
+        all():
+
+        whorlids[wid.identity][wid.whorl_hashed] =\
+            min(1, float(wid.count) / wid.identity.count)
 
     givenid = defaultdict(list)
-    for identity in identities:
+    for identity, idprobs in whorlids.items():
         for whorl in whorls:
-            if whorlids.has_key((identity, whorl.hashed)):
-                wi = whorlids[(identity, whorl.hashed)]
-                prob = min(1, \
-                           float(wi.count) / identity.count)
-            else:
-                prob = minprob
-
-            givenid[identity].append(prob)
+            givenid[identity].append(idprobs[whorl.hashed])
 
     probs = [(\
                reduce(mul, idprobs) * (float(identity.count) / stats["total_visits"]),\
@@ -213,7 +203,7 @@ def identify_from(whorls, session):
                identity) \
                for identity, idprobs in givenid.items()]
 
-    
+    for p in probs: print p[2].username, p[0]
     probs.sort()
     return probs[-1][2] # the most likely identity (third element is the identity)
     
