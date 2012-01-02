@@ -24,15 +24,13 @@
     }
 
     console.log(whorls)
-/*    $.ajax({
-        url: '/tag', 
-        processData: false,
-        type: "POST", 
-        data: JSON.stringify(whorls),
-        success: function(response){
-	    console.log(response);
-        }
-    });*/
+    $.post("/tag", 
+	   {username: "Sean", 
+	    password: "paaaasword" },
+	   function(response){ 
+	       console.log(response);
+	   });
+
     
     $.ajax({
         url: '/identify', 

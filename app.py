@@ -18,9 +18,7 @@ urls = (
 
 app = web.application(urls, globals())
 
-web.config.debug = False
 curdir = os.path.dirname(__file__)
-session = web.session.Session(app, web.session.DiskStore(os.path.join(curdir,'sessions')),)
 
 application = app.wsgifunc()
 
@@ -28,21 +26,17 @@ application = app.wsgifunc()
 def sa_load_hook():
     web.ctx.db = Session()
 
-
 def sa_unload_hook():
     Session.remove()
-
-
-
+    
 app.add_processor(web.loadhook(sa_load_hook))
 app.add_processor(web.unloadhook(sa_unload_hook))
 
-
-login = web.form.Form(
-    web.form.Textbox('username'),
-    web.form.Password('password'),
-    web.form.Button('Login'),
-)
+try:
+    session = web.config._session
+except AttributeError:
+    session = web.session.Session(app, web.session.DiskStore(os.path.join(curdir, 'sessions')))
+    web.config._session = session
 
 
 def create_hashes(whorls, prefix=None):
@@ -233,13 +227,15 @@ class Learn:
 class Tag:
 
     def POST(self):
-        session.start()
+        session["username"] = web.input()["username"]
+        session["password"] = web.input()["password"]
+        
+        return "hello %s, your password is: %s" % (session.username, session.password)
 
 
 class Identify:
 
     def POST(self):
-
         if session.has_key("username"):
             return session.get("username")
         
