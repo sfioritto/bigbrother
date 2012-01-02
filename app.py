@@ -12,7 +12,36 @@ from collections import defaultdict
 
 urls = (
     '/tag', 'Tag',
+    '/learn', 'Learn',
     '/identify', 'Identify',
+)
+
+app = web.application(urls, globals())
+
+web.config.debug = False
+curdir = os.path.dirname(__file__)
+session = web.session.Session(app, web.session.DiskStore(os.path.join(curdir,'sessions')),)
+
+application = app.wsgifunc()
+
+
+def sa_load_hook():
+    web.ctx.db = Session()
+
+
+def sa_unload_hook():
+    Session.remove()
+
+
+
+app.add_processor(web.loadhook(sa_load_hook))
+app.add_processor(web.unloadhook(sa_unload_hook))
+
+
+login = web.form.Form(
+    web.form.Textbox('username'),
+    web.form.Password('password'),
+    web.form.Button('Login'),
 )
 
 
@@ -47,15 +76,15 @@ def learn(whorls, identity):
     and identity.
     """
 
-    session = web.ctx.session
+    db = web.ctx.db
     identity.count = identity.count + 1
-    total_visits = session.query(Stat).filter_by(key="total_visits").one()
+    total_visits = db.query(Stat).filter_by(key="total_visits").one()
     total_visits.value = total_visits.value + 1
 
     for whorl in whorls:
         whorl.count = whorl.count + 1
         try:
-            wgi = session.query(WhorlIdentity).\
+            wgi = db.query(WhorlIdentity).\
                 filter_by(whorl_hashed=whorl.hashed).\
                 filter_by(identity_id=identity.id).\
                 one()
@@ -64,8 +93,8 @@ def learn(whorls, identity):
         except NoResultFound:
             wgi = WhorlIdentity(whorl_hashed=whorl.hashed,
                                      identity_id = identity.id)
-            session.add(wgi)
-            session.flush()
+            db.add(wgi)
+            db.flush()
                 
 
 def build_raw_data(partial):
@@ -84,22 +113,22 @@ def build_raw_data(partial):
 
 
 def get_user(username):
-    session = web.ctx.session
+    db = web.ctx.db
     try:
-        return session.query(Identity).filter_by(username=username).one()
+        return db.query(Identity).filter_by(username=username).one()
     except NoResultFound:
         identity = Identity(username=username)
-        session.add(identity)
-        session.flush()
+        db.add(identity)
+        db.flush()
         return identity
 
 
 def get_whorls(rawdata):
 
-    session = web.ctx.session
+    db = web.ctx.db
     whorls = []
     hashes = [hashed for key, value, hashed in create_hashes(dict(rawdata))]
-    whorls = session.query(Whorl).\
+    whorls = db.query(Whorl).\
         filter(Whorl.hashed.in_(hashes)).\
         all()
 
@@ -122,15 +151,15 @@ def get_whorls(rawdata):
 def create_get_whorls(rawdata):
         
     whorls = []
-    session = web.ctx.session
+    db = web.ctx.db
     for key, value, hashed in create_hashes(dict(rawdata)):
         try:
-            whorl = session.query(Whorl).filter_by(hashed=hashed).one()
+            whorl = db.query(Whorl).filter_by(hashed=hashed).one()
 
         except NoResultFound:
             whorl = Whorl(hashed=hashed, key=key, value=value)
-            session.add(whorl)
-            session.flush()
+            db.add(whorl)
+            db.flush()
             
         whorls.append(whorl)
 
@@ -138,21 +167,21 @@ def create_get_whorls(rawdata):
 
     
 
-def stats_obj(session):
-    return dict([(s.key, s.value) for s in session.query(Stat).all()])
+def stats_obj(db):
+    return dict([(s.key, s.value) for s in db.query(Stat).all()])
 
 
 def identify_from(whorls):
 
-    session = web.ctx.session
-    stats = stats_obj(session)
+    db = web.ctx.db
+    stats = stats_obj(db)
     minprob = float(1) / stats["total_visits"]
     whorl_hashes = list(set([whorl.hashed for whorl in whorls]))
 
     # this is a dictionary of dictionaries. The inner dictionaries
     # contain probabilities of the whorl given the user.
     whorlids = defaultdict(lambda : defaultdict(lambda : minprob))
-    for wid in session.query(WhorlIdentity).\
+    for wid in db.query(WhorlIdentity).\
         filter(WhorlIdentity.whorl_hashed.in_(whorl_hashes)).\
         all():
 
@@ -187,23 +216,33 @@ def identify_from(whorls):
     return probs[-1][2] # the most likely identity (third element is the identity)
 
 
+class Learn:
+    
+    def POST(self):
+        if session.has_key("username"):
+            partial = json.loads(web.data())
+            rawdata = build_raw_data(partial)
+            identity = get_user(username)
+            whorls = create_get_whorls(rawdata)
+            learn(whorls, identity)
+            web.ctx.db.commit()
+        
+        return ""
+    
+
 class Tag:
 
     def POST(self):
-        partial = json.loads(web.data())
-        rawdata = build_raw_data(partial)
-        username = partial["username"]
-        identity = get_user(username)
-        whorls = create_get_whorls(rawdata)
-        learn(whorls, identity)
-        web.ctx.session.commit()
-        
-        return ""
+        session.start()
 
 
 class Identify:
 
     def POST(self):
+
+        if session.has_key("username"):
+            return session.get("username")
+        
         partial = json.loads(web.data()) # as in a partial fingerprint
         rawdata = build_raw_data(partial)
         whorls = get_whorls(rawdata)
@@ -215,17 +254,5 @@ class Identify:
             return "I dunno."
 
         
-def sa_load_hook():
-    web.ctx.session = Session()
-
-
-def sa_unload_hook():
-    Session.remove()
-
-
-app = web.application(urls, globals())
-app.add_processor(web.loadhook(sa_load_hook))
-app.add_processor(web.unloadhook(sa_unload_hook))
-
 if __name__ == '__main__':
     app.run()

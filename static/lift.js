@@ -23,9 +23,8 @@
 	whorls.username = "chrome"
     }
 
-    console.log(whorls.username);
     console.log(whorls)
-    $.ajax({
+/*    $.ajax({
         url: '/tag', 
         processData: false,
         type: "POST", 
@@ -33,7 +32,7 @@
         success: function(response){
 	    console.log(response);
         }
-    });
+    });*/
     
     $.ajax({
         url: '/identify', 

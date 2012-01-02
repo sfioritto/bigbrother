@@ -1,4 +1,5 @@
 /env
+/sessions
 /config/*.json
 *.pyc
 *~
