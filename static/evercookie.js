@@ -310,9 +310,9 @@ var evercookie = (function (window) {
     this.evercookie_etag = function (name, value) {
       if (value !== undefined) {
         // make sure we have evercookie session defined first
-        document.cookie = "evercookie_etag=" + value;
+document.cookie = "evercookie_etag=" + value + "; path=/";
         // evercookie_etag.php handles etagging
-        newImage("evercookie_etag.php?name=" + name);
+        newImage("/evercookie_etag?name=" + name);
       } else {
         // interestingly enough, we want to erase our evercookie
         // http cookie so the php will force a cached response
@@ -321,7 +321,7 @@ var evercookie = (function (window) {
         document.cookie = "evercookie_etag=; expires=Mon, 20 Sep 2010 00:00:00 UTC; path=/";
 
         $.ajax({
-          url: "evercookie_etag.php?name=" + name,
+          url: "/evercookie_etag?name=" + name,
           success: function (data) {
             // put our cookie back
             document.cookie = "evercookie_etag=" + origvalue + "; expires=Tue, 31 Dec 2030 00:00:00 UTC; path=/";

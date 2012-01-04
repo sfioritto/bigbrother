@@ -14,7 +14,9 @@ urls = (
     '/tag', 'Tag',
     '/learn', 'Learn',
     '/identify', 'Identify',
-    '/evercookie_cache', 'Cache'
+    '/evercookie_cache', 'EvercookieCache',
+    '/evercookie_png', 'EvercookiePng',
+    '/evercookie_etag', 'EvercookieEtag'
 )
 
 app = web.application(urls, globals())
@@ -251,7 +253,7 @@ class Identify:
             return "I dunno."
 
 
-class Cache:
+class EvercookieCache:
 
     def GET(self):
         """
@@ -264,14 +266,42 @@ class Cache:
             web.header('Expires', 'Tue, 31 Dec 2030 23:30:45 GMT');
             web.header('Cache-Control', 'private, max-age=630720000');
             cache = web.cookies().evercookie_cache
-            print cache
-            print '------------------------------'
             
         #no cookie
         except:
             raise NotModified()
        
         return cache
+
+
+class EvercookiePng:
+    
+    def GET(self):
+        """
+        Port of evercookie php png code.
+        """
+        return ""
+
+
+class EvercookieEtag:
+
+    def GET(self):
+        
+        """
+        Port of evercookiee php etag code.
+        """
+
+        etag = ""
+        try:
+            web.header('Etag', web.cookies().evercookie_etag)
+            return ""
+        
+        except:
+            if web.ctx.environ.has_key("HTTP_IF_NONE_MATCH"):
+                etag = web.ctx.environ["HTTP_IF_NONE_MATCH"]
+
+        return etag
+    
 
 
 class NotModified(web.HTTPError):
