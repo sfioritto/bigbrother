@@ -14,6 +14,7 @@ urls = (
     '/tag', 'Tag',
     '/learn', 'Learn',
     '/identify', 'Identify',
+    '/evercookie_cache', 'Cache'
 )
 
 app = web.application(urls, globals())
@@ -248,6 +249,35 @@ class Identify:
             return identity.username
         else:
             return "I dunno."
+
+
+class Cache:
+
+    def GET(self):
+        """
+        Port of evercookie php simple cache code.
+        """
+        cache = ""
+        try:
+            web.header('Content-Type', 'text/html');
+            web.header('Last-Modified', 'Wed, 30 Jun 2010 21:36:48 GMT');
+            web.header('Expires', 'Tue, 31 Dec 2030 23:30:45 GMT');
+            web.header('Cache-Control', 'private, max-age=630720000');
+            cache = web.cookies().evercookie_cache
+            print cache
+            print '------------------------------'
+            
+        #no cookie
+        except:
+            raise NotModified()
+       
+        return cache
+
+
+class NotModified(web.HTTPError):
+    def __init__(self):
+        status = "HTTP/1.1 304 Not Modified"
+        web.HTTPError.__init__(self, status, {}, "")
 
         
 if __name__ == '__main__':
