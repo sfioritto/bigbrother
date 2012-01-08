@@ -1,6 +1,8 @@
 import web
 import os
 import json
+import Image
+import StringIO
 from models import Whorl, WhorlIdentity, engine, Session, Identity, Stat
 from hashlib import sha512
 from sqlalchemy.orm import joinedload
@@ -280,7 +282,25 @@ class EvercookiePng:
         """
         Port of evercookie php png code.
         """
-        return ""
+
+        try:
+            ec_png = web.cookies().evercookie_png
+            rgb = tuple([ord(x) for x in ec_png])
+            i = Image.new("RGB", (200, 1))
+            px = i.load()
+            px[0, 0] = rgb
+            sio = StringIO.StringIO()
+            i.save(sio, "PNG")
+            web.header('Content-Type', 'image/png');
+            web.header('Last-Modified', 'Wed, 30 Jun 2010 21:36:48 GMT');
+            web.header('Expires', 'Tue, 31 Dec 2030 23:30:45 GMT');
+            web.header('Cache-Control', 'private, max-age=630720000');
+            return sio.getvalue()
+
+            
+        except Exception as e:
+            #no cookie found, force a read from the cache
+            raise NotModified()
 
 
 class EvercookieEtag:

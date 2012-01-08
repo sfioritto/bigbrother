@@ -367,7 +367,7 @@ document.cookie = "evercookie_etag=" + value + "; path=/";
         img.style.position = "absolute";
         if (value !== undefined) {
           // make sure we have evercookie session defined first
-          document.cookie = "evercookie_png=" + value;
+          document.cookie = "evercookie_png=" + value + "; path=/";
         } else {
           self._ec.pngData = undefined;
           ctx = canvas.getContext("2d");
@@ -405,7 +405,7 @@ document.cookie = "evercookie_etag=" + value + "; path=/";
             }
           };
         }
-        img.src = "evercookie_png.php?name=" + name;
+        img.src = "/evercookie_png?name=" + name;
       }
     };
 
