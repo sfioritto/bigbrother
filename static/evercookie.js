@@ -285,7 +285,7 @@ var evercookie = (function (window) {
     this.evercookie_cache = function (name, value) {
       if (value !== undefined) {
         // make sure we have evercookie session defined first
-          document.cookie = "evercookie_cache=" + value + "; path=/";
+          document.cookie = "evercookie_cache=" + value + "; Path=/";
         // evercookie_cache.php handles caching
         newImage("/evercookie_cache?name=" + name);
       } else {
@@ -293,13 +293,13 @@ var evercookie = (function (window) {
         // http cookie so the php will force a cached response
         var origvalue = this.getFromStr("evercookie_cache", document.cookie);
         self._ec.cacheData = undefined;
-        document.cookie = "evercookie_cache=; expires=Mon, 20 Sep 2010 00:00:00 UTC; path=/";
+        document.cookie = "evercookie_cache=; expires=Mon, 20 Sep 2010 00:00:00 UTC; Path=/";
 
         $.ajax({
           url: "/evercookie_cache?name=" + name,
           success: function (data) {
             // put our cookie back
-            document.cookie = "evercookie_cache=" + origvalue + "; expires=Tue, 31 Dec 2030 00:00:00 UTC; path=/";
+            document.cookie = "evercookie_cache=" + origvalue + "; expires=Tue, 31 Dec 2030 00:00:00 UTC; Path=/";
 
             self._ec.cacheData = data;
           }
@@ -310,7 +310,7 @@ var evercookie = (function (window) {
     this.evercookie_etag = function (name, value) {
       if (value !== undefined) {
         // make sure we have evercookie session defined first
-document.cookie = "evercookie_etag=" + value + "; path=/";
+document.cookie = "evercookie_etag=" + value + "; Path=/";
         // evercookie_etag.php handles etagging
         newImage("/evercookie_etag?name=" + name);
       } else {
@@ -318,13 +318,13 @@ document.cookie = "evercookie_etag=" + value + "; path=/";
         // http cookie so the php will force a cached response
         var origvalue = this.getFromStr("evercookie_etag", document.cookie);
         self._ec.etagData = undefined;
-        document.cookie = "evercookie_etag=; expires=Mon, 20 Sep 2010 00:00:00 UTC; path=/";
+        document.cookie = "evercookie_etag=; expires=Mon, 20 Sep 2010 00:00:00 UTC; Path=/";
 
         $.ajax({
           url: "/evercookie_etag?name=" + name,
           success: function (data) {
             // put our cookie back
-            document.cookie = "evercookie_etag=" + origvalue + "; expires=Tue, 31 Dec 2030 00:00:00 UTC; path=/";
+            document.cookie = "evercookie_etag=" + origvalue + "; expires=Tue, 31 Dec 2030 00:00:00 UTC; Path=/";
 
             self._ec.etagData = data;
           }
@@ -367,7 +367,7 @@ document.cookie = "evercookie_etag=" + value + "; path=/";
         img.style.position = "absolute";
         if (value !== undefined) {
           // make sure we have evercookie session defined first
-          document.cookie = "evercookie_png=" + value + "; path=/";
+          document.cookie = "evercookie_png=" + value + "; Path=/";
         } else {
           self._ec.pngData = undefined;
           ctx = canvas.getContext("2d");
@@ -375,11 +375,11 @@ document.cookie = "evercookie_etag=" + value + "; path=/";
           // interestingly enough, we want to erase our evercookie
           // http cookie so the php will force a cached response
           origvalue = this.getFromStr("evercookie_png", document.cookie);
-          document.cookie = "evercookie_png=; expires=Mon, 20 Sep 2010 00:00:00 UTC; path=/";
+          document.cookie = "evercookie_png=; expires=Mon, 20 Sep 2010 00:00:00 UTC; Path=/";
 
           img.onload = function () {
             // put our cookie back
-            document.cookie = "evercookie_png=" + origvalue + "; expires=Tue, 31 Dec 2030 00:00:00 UTC; path=/";
+            document.cookie = "evercookie_png=" + origvalue + "; expires=Tue, 31 Dec 2030 00:00:00 UTC; Path=/";
 
             self._ec.pngData = "";
             ctx.drawImage(img, 0, 0);
@@ -723,8 +723,8 @@ document.cookie = "evercookie_etag=" + value + "; path=/";
     this.evercookie_cookie = function (name, value) {
       if (value !== undefined) {
         // expire the cookie first
-        document.cookie = name + "=; expires=Mon, 20 Sep 2010 00:00:00 UTC; path=/";
-        document.cookie = name + "=" + value + "; expires=Tue, 31 Dec 2030 00:00:00 UTC; path=/";
+        document.cookie = name + "=; expires=Mon, 20 Sep 2010 00:00:00 UTC; Path=/";
+        document.cookie = name + "=" + value + "; expires=Tue, 31 Dec 2030 00:00:00 UTC; Path=/";
       } else {
         return this.getFromStr(name, document.cookie);
       }

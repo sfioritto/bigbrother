@@ -261,19 +261,18 @@ class EvercookieCache:
         """
         Port of evercookie php simple cache code.
         """
-        cache = ""
+        
         try:
-            web.header('Content-Type', 'text/html');
+            web.header('Content-Type', 'image/png');
             web.header('Last-Modified', 'Wed, 30 Jun 2010 21:36:48 GMT');
             web.header('Expires', 'Tue, 31 Dec 2030 23:30:45 GMT');
             web.header('Cache-Control', 'private, max-age=630720000');
-            cache = web.cookies().evercookie_cache
-            
+            return web.cookies().evercookie_cache
         #no cookie
         except:
-            raise NotModified()
-       
-        return cache
+            web.header('Content-Type', 'image/png');
+            raise web.notmodified()
+
 
 
 class EvercookiePng:
@@ -295,12 +294,14 @@ class EvercookiePng:
             web.header('Last-Modified', 'Wed, 30 Jun 2010 21:36:48 GMT');
             web.header('Expires', 'Tue, 31 Dec 2030 23:30:45 GMT');
             web.header('Cache-Control', 'private, max-age=630720000');
+
             return sio.getvalue()
 
             
         except Exception as e:
+
             #no cookie found, force a read from the cache
-            raise NotModified()
+            raise web.notmodified()
 
 
 class EvercookieEtag:
@@ -312,6 +313,7 @@ class EvercookieEtag:
         """
 
         etag = ""
+        web.header('Content-Type', 'text/html');
         try:
             web.header('Etag', web.cookies().evercookie_etag)
             return ""
@@ -324,11 +326,5 @@ class EvercookieEtag:
     
 
 
-class NotModified(web.HTTPError):
-    def __init__(self):
-        status = "HTTP/1.1 304 Not Modified"
-        web.HTTPError.__init__(self, status, {}, "")
-
-        
 if __name__ == '__main__':
     app.run()
