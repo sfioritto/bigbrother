@@ -23,7 +23,6 @@
 	whorls.username = "chrome"
     }
 
-    console.log(whorls)
     $.post("/tag", 
 	   {username: "Sean", 
 	    password: "paaaasword" },
@@ -41,5 +40,22 @@
 	    console.log(response);
         }
     });
+
+    var ec = new evercookie();
+
+
+    ec.get("uid", function(best, all) {
+	console.log("evercookie get");
+	console.log(best);
+	console.log(all);
+    });
+
+
+//    ec.set("uid", "112")
+
+    /*
+     * 1. Do a get on uid
+     * 2. if it's not there
+     */
 
 })();

@@ -3,7 +3,7 @@ import os
 import json
 import Image
 import StringIO
-from models import Whorl, WhorlIdentity, engine, Session, Identity, Stat
+from models import Whorl, Session, WhorlIdentity, engine, Identity, Stat
 from hashlib import sha512
 from sqlalchemy.orm import joinedload
 from sqlalchemy.orm.exc import NoResultFound
@@ -36,12 +36,6 @@ def sa_unload_hook():
     
 app.add_processor(web.loadhook(sa_load_hook))
 app.add_processor(web.unloadhook(sa_unload_hook))
-
-try:
-    session = web.config._session
-except AttributeError:
-    session = web.session.Session(app, web.session.DiskStore(os.path.join(curdir, 'sessions')))
-    web.config._session = session
 
 
 def create_hashes(whorls, prefix=None):
@@ -218,13 +212,12 @@ def identify_from(whorls):
 class Learn:
     
     def POST(self):
-        if session.has_key("username"):
-            partial = json.loads(web.data())
-            rawdata = build_raw_data(partial)
-            identity = get_user(username)
-            whorls = create_get_whorls(rawdata)
-            learn(whorls, identity)
-            web.ctx.db.commit()
+        partial = json.loads(web.data())
+        rawdata = build_raw_data(partial)
+        identity = get_user(username)
+        whorls = create_get_whorls(rawdata)
+        learn(whorls, identity)
+        web.ctx.db.commit()
         
         return ""
     
@@ -232,17 +225,12 @@ class Learn:
 class Tag:
 
     def POST(self):
-        session["username"] = web.input()["username"]
-        session["password"] = web.input()["password"]
-        
-        return "hello %s, your password is: %s" % (session.username, session.password)
+        return ""
 
 
 class Identify:
 
     def POST(self):
-        if session.has_key("username"):
-            return session.get("username")
         
         partial = json.loads(web.data()) # as in a partial fingerprint
         rawdata = build_raw_data(partial)

@@ -721,11 +721,17 @@ document.cookie = "evercookie_etag=" + value + "; Path=/";
     };
 
     this.evercookie_cookie = function (name, value) {
+	console.log("call cookie");
+	console.log(document.cookie);
+	console.log("------------------------------");
+	console.log(value);
       if (value !== undefined) {
         // expire the cookie first
         document.cookie = name + "=; expires=Mon, 20 Sep 2010 00:00:00 UTC; Path=/";
         document.cookie = name + "=" + value + "; expires=Tue, 31 Dec 2030 00:00:00 UTC; Path=/";
       } else {
+	  console.log(name)
+	  console.log(document.cookie)
         return this.getFromStr(name, document.cookie);
       }
     };
