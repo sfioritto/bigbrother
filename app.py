@@ -13,7 +13,6 @@ from collections import defaultdict
 
 
 urls = (
-    '/tag', 'Tag',
     '/learn', 'Learn',
     '/identify', 'Identify',
     '/evercookie_cache', 'EvercookieCache',
@@ -214,19 +213,13 @@ class Learn:
     def POST(self):
         partial = json.loads(web.data())
         rawdata = build_raw_data(partial)
-        identity = get_user(username)
+        identity = get_user(partial["username"])
         whorls = create_get_whorls(rawdata)
         learn(whorls, identity)
         web.ctx.db.commit()
         
         return ""
     
-
-class Tag:
-
-    def POST(self):
-        return ""
-
 
 class Identify:
 
