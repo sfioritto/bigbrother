@@ -29,12 +29,13 @@
 
     ec.get("uid", function(best, all) {
 	if (best){
-	    //add to whorls
+	    console.log("-----> ");
+	    console.log(all);
 	} 
 
     });
 
-    ec.set("uid", "112")
+//    ec.set("uid", "112")
 
     $.post("/tag", 
 	   {username: "Sean", 
@@ -58,7 +59,7 @@
 	console.log(new Date().getTime() - start + ' milliseconds');
     };
 
-    if (window.postMessage){
+    if (false && window.postMessage){
 
 	var start = new Date().getTime();
 	
@@ -111,7 +112,7 @@
 	    if (result === null) {
 		//whoops
 	    } else {
-		console.log(site + " -----> " + result);
+		//got the result
 	    }
 	    var nextSite = sites.pop();
 	    if (nextSite) {
