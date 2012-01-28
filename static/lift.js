@@ -32,7 +32,7 @@
 	whorls.username = "Sean";
 	whorls.password = "password";
 	learn(whorls, function(){ 
-	    identify(whorls, function(){
+	    identify(whorls, function(response){
 		console.log(response);
 	    })
 	});
