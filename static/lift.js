@@ -12,12 +12,11 @@
     
     ec = new evercookie(),
 
-    get_history = function(){
+    get_history = function(cb){
 	visipisi.get(function(results){
 	    whorls.history = results;
 	    identify(whorls, function(response){
-		console.log(whorls);
-		console.log(response);
+		cb(response, whorls);
 	    });
 	});
     },
@@ -56,8 +55,13 @@
 	});
     };
 
-    
-    $(document).ready(function(){
+
+    window.bigbrother = {};
+
+    bigbrother.learn = function(){
+    };
+
+    bigbrother.guess = function(cb){
 	whorls.plugins = _.map(navigator.plugins, parsePlugin);
 	whorls.timezone = (new Date()).getTimezoneOffset();
 	whorls.screen = screen;
@@ -75,8 +79,9 @@
 	    whorls.evercookie = all;
 	    whorls.username = "Sean";
 	    whorls.password = "password";
-	    get_fonts(get_history);
+	    get_fonts(function(){
+		get_history(cb);
+	    });
 	});
-    });
-
+    };
 })();
