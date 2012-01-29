@@ -42,7 +42,10 @@ def create_hashes(whorls, prefix=None):
     hashes = []
 
     for key, value in whorls.items():
-
+        
+        if type(value) != unicode:
+            value = unicode(value)
+            
         if prefix:
             key = prefix + ":" + key
             
@@ -54,10 +57,11 @@ def create_hashes(whorls, prefix=None):
                 hashes.extend(create_hashes(item, prefix=key))
                 
         else:
+
             hashes.append((key,
                             value,
-                            sha512(key + str(value)).hexdigest()))
-
+                            sha512((key + value).encode("utf-8")).hexdigest()))
+            
     return hashes
 
 
