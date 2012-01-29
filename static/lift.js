@@ -36,14 +36,33 @@
 		})
 	    });
 	});
-    };
+    },
 
-    ec.get("uid", function(best, all) {
+    get_fonts = function(){
+	
+	// Check Flash version
+	if (!swfobject.hasFlashPlayerVersion("9.0.0")){
+	    console.log("oops");
+	} else {
+	    console.log("good");
+	}
+	
+        var fontDetect = new FontDetect("fontdetectswf", "FontList.swf", function(fd) {        
+            var fonts = fd.fonts();
+	    console.log("yup");
+	    console.log(fonts);
+	});
+	
+    };
+    
+    $(document).ready(get_fonts);
+    
+/*    ec.get("uid", function(best, all) {
 	whorls.evercookie = all;
 	whorls.username = "Sean";
 	whorls.password = "password";
 	get_history();
-    });
+    });*/
     
     //    ec.set("uid", "112")
     
