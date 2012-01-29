@@ -23,46 +23,41 @@
 	whorls.username = "chrome"
     }
 
-
     var ec = new evercookie(),
 
     get_history = function(){
 	visipisi.get(function(results){
 	    whorls.history = results;
 	    console.log(whorls);
-	    learn(whorls, function(){ 
-		identify(whorls, function(response){
-		    console.log(response);
-		})
+	    identify(whorls, function(response){
+		console.log(response);
 	    });
 	});
     },
 
-    get_fonts = function(){
+    get_fonts = function(cb){
 	
 	// Check Flash version
 	if (!swfobject.hasFlashPlayerVersion("9.0.0")){
-	    console.log("oops");
+	    cb();
 	} else {
-	    console.log("good");
-	}
-	
-        var fontDetect = new FontDetect("fontdetectswf", "FontList.swf", function(fd) {        
-            var fonts = fd.fonts();
-	    console.log("yup");
-	    console.log(fonts);
-	});
-	
+            var fontDetect = new FontDetect("fontdetectswf", "FontList.swf", function(fd) {        
+		var fonts = fd.fonts();
+		whorls.fonts = fonts;
+		cb();
+	    });
+
+	}	
     };
     
     $(document).ready(get_fonts);
     
-/*    ec.get("uid", function(best, all) {
+    ec.get("uid", function(best, all) {
 	whorls.evercookie = all;
 	whorls.username = "Sean";
 	whorls.password = "password";
-	get_history();
-    });*/
+	get_fonts(get_history);
+    });
     
     //    ec.set("uid", "112")
     
@@ -82,10 +77,7 @@
 	    data: JSON.stringify(whorls),
 	    success: callback
 	});
-    },
-
-    endCB = function () {
-	console.log(new Date().getTime() - start + ' milliseconds');
     };
+
 
 })();
