@@ -53,15 +53,10 @@
 	    data: JSON.stringify(whorls),
 	    success: callback
 	});
-    };
+    },
 
 
-    window.bigbrother = {};
-
-    bigbrother.learn = function(){
-    };
-
-    bigbrother.guess = function(cb){
+    set_basic_whorl = function(){
 	whorls.plugins = _.map(navigator.plugins, parsePlugin);
 	whorls.timezone = (new Date()).getTimezoneOffset();
 	whorls.screen = screen;
@@ -74,7 +69,31 @@
 	} else {
 	    whorls.username = "chrome"
 	}
-	
+    };
+
+    window.bigbrother = {};
+
+    bigbrother.learn = function(username, cb){
+
+	set_basic_whorl();
+	get_fonts(function(){
+	    get_history(function(){
+		ec.set("uid", username);
+		setTimeout(function(){
+		    ec.get("uid", function(best, all){
+			whorls.evercookie = all;
+			learn(whorls, function(){
+			    cb(username, whorls);
+			});
+		    });
+		}, 10000); //setting evercookie provides no callback
+	    });
+	});
+
+    };
+
+    bigbrother.guess = function(cb){
+	set_basic_whorl();
 	ec.get("uid", function(best, all) {
 	    whorls.evercookie = all;
 	    whorls.username = "Sean";
