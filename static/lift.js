@@ -15,9 +15,7 @@
     get_history = function(cb){
 	visipisi.get(function(results){
 	    whorls.history = results;
-	    identify(whorls, function(response){
-		cb(response, whorls);
-	    });
+	    cb(whorls);
 	});
     },
 
@@ -56,26 +54,25 @@
     },
 
 
-    set_basic_whorl = function(){
+    set_basic_whorl = function(username){
+
+	if (username){
+	    whorls.username = username;
+	}
 	whorls.plugins = _.map(navigator.plugins, parsePlugin);
+	whorls.useragent = navigator.userAgent;
 	whorls.timezone = (new Date()).getTimezoneOffset();
 	whorls.screen = screen;
 	whorls.cookiesenabled = navigator.cookieEnabled;
 	whorls.localstorage = !!localStorage;
 	whorls.sessionstorage = !!sessionStorage;
-	
-	if (navigator.userAgent === "Mozilla/5.0 (Macintosh; Intel Mac OS X 10.7; rv:7.0.1) Gecko/20100101 Firefox/7.0.1"){
-	    whorls.username = "firefox"
-	} else {
-	    whorls.username = "chrome"
-	}
     };
 
     window.bigbrother = {};
 
     bigbrother.learn = function(username, cb){
 
-	set_basic_whorl();
+	set_basic_whorl(username);
 	get_fonts(function(){
 	    get_history(function(){
 		ec.set("uid", username);
@@ -98,8 +95,11 @@
 	    whorls.evercookie = all;
 	    whorls.username = "Sean";
 	    whorls.password = "password";
+
 	    get_fonts(function(){
-		get_history(cb);
+		get_history(function(){
+		    identify(whorls, cb);
+		})
 	    });
 	});
     };
