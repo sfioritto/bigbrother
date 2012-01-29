@@ -24,18 +24,25 @@
     }
 
 
-    var ec = new evercookie();
+    var ec = new evercookie(),
 
+    get_history = function(){
+	visipisi.get(function(results){
+	    whorls.history = results;
+	    console.log(whorls);
+	    learn(whorls, function(){ 
+		identify(whorls, function(response){
+		    console.log(response);
+		})
+	    });
+	});
+    };
 
     ec.get("uid", function(best, all) {
 	whorls.evercookie = all;
 	whorls.username = "Sean";
 	whorls.password = "password";
-	learn(whorls, function(){ 
-	    identify(whorls, function(response){
-		console.log(response);
-	    })
-	});
+	get_history();
     });
     
     //    ec.set("uid", "112")
