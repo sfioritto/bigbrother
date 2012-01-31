@@ -233,6 +233,7 @@ class Identify:
         rawdata = build_raw_data(partial)
         whorls = get_whorls(rawdata)
         identity = identify_from(whorls)
+        web.header('Content-Type', 'text/html');
 
         if identity:
             return identity.username
