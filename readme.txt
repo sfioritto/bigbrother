@@ -1,3 +1,8 @@
+This is an implementation of browser fingerprinting using a bayesian classifier. 
+
+It's very early stage and is not yet ready for public consumption.
+
+
 user agent
 http accept headers
 browser plugin 
