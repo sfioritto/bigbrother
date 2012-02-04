@@ -54,7 +54,7 @@ def switch(hash):
         with settings(warn_only=True):
             sudo("rm bigbrother")
         sudo("ln -s %s/snapshots/%s bigbrother" % (env.prodhome, hash))
-        sudo("ln -s config.json bigbrother/config/config.json")
+        sudo("ln -s %s/config.json %s/bigbrother/config/config.json" % (env.prodhome, env.prodhome))
 
 
 def stop():
@@ -64,6 +64,7 @@ def stop():
 
     with settings(warn_only=True):
         sudo("/etc/init.d/nginx stop")
+        run('kill `pgrep -f "python /var/nymbus/www/prod.py"`')
         #todo: stop fcgi processes
 
 
@@ -73,9 +74,9 @@ def start():
     assert len(env.hosts) == 1, "This script only works with one host"
 
     with settings(warn_only=True):
-        sudo("/etc/init.d/nginx stop")
-#        spawn-fcgi -d /path/to/www -f /path/to/www/index.py -a 127.0.0.1 -p 9002 -F 5
-        #todo: start fcgi processes
+        sudo("/etc/init.d/nginx start")
+        run("spawn-fcgi -d /var/nymbus/www -f /var/nymbus/www/prod.py -a 127.0.0.1 -p 9002 -F 10")
+
 
 def reboot():
     stop()
