@@ -51,10 +51,9 @@ def upload_untar(archive, hash):
 def switch(hash):
     with cd(env.prodhome):
         sudo("ln -s %s/snapshots/%s/webapp /tmp/live_tmp && sudo mv -Tf /tmp/live_tmp %s" % (env.prodhome, hash, env.approot))
-
-    with cd(env.approot):
-        # copy production settings files here if applicable
-        pass
+        sudo("rm bigbrother")
+        sudo("ln -s bigbrother %s/snapshots/%s" % (env.prodhome, hash))
+        sudo("cp bigbrother/config/config.json .")
 
 
 def stop():

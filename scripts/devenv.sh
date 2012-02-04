@@ -9,6 +9,7 @@ pip install web.py
 pip install PIL
 pip install sqlalchemy
 pip install psycopg2
+pip install fabric
 dropdb bigbrother
 createdb bigbrother
 python scripts/createdb.py 
