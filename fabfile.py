@@ -54,6 +54,7 @@ def switch(hash):
         with settings(warn_only=True):
             sudo("rm bigbrother")
         sudo("ln -s %s/snapshots/%s bigbrother" % (env.prodhome, hash))
+        sudo("ln -s config.json bigbrother/config/config.json")
 
 
 def stop():
