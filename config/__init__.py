@@ -4,7 +4,7 @@ import json, os
 # a command line flag or something
 
 path = os.path.dirname(__file__)
-for key, value in json.loads(open(os.path.join(path, "dev.json")).read()).items():
+for key, value in json.loads(open(os.path.join(path, "config.json")).read()).items():
     vars()[key] = value
 
 

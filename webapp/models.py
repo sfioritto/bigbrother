@@ -39,5 +39,3 @@ class WhorlIdentity(Base):
     whorl_hashed = Column(String(128), ForeignKey('whorls.hashed'), primary_key=True)
     identity_id = Column(Integer, ForeignKey('identities.id'), primary_key=True)
     count = Column(Integer, default=1)
-    
-
