@@ -42,21 +42,21 @@ def create_hashes(whorls, prefix=None):
     hashes = []
 
     for key, value in whorls.items():
-        
-        if type(value) != unicode:
-            value = unicode(value)
-            
+                    
         if prefix:
             key = prefix + ":" + key
-            
+
         if type(value) == dict:
-            hashes.extend(create_hashes(value, prefix=key))
+            hashes.extend(create_hashes(value, prefix=key))            
             
         elif type(value) == list:
             for item in value:
                 hashes.extend(create_hashes(item, prefix=key))
                 
         else:
+            
+            if type(value) != unicode:
+                value = unicode(value)
 
             hashes.append((key,
                             value,
@@ -148,6 +148,7 @@ def create_get_whorls(rawdata):
         
     whorls = []
     db = web.ctx.db
+
     for key, value, hashed in create_hashes(dict(rawdata)):
         try:
             whorl = db.query(Whorl).filter_by(hashed=hashed).one()
@@ -215,6 +216,7 @@ def identify_from(whorls):
 class Learn:
     
     def POST(self):
+
         partial = json.loads(web.data())
         rawdata = build_raw_data(partial)
         identity = get_user(partial["username"])
