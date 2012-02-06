@@ -7,3 +7,11 @@ tcp/ip stack fingerprinting http://en.wikipedia.org/wiki/TCP/IP_stack_fingerprin
 Lot's of ideas here, like Firefox Components object:
 http://www.defcon.org/images/defcon-17/dc-17-presentations/defcon-17-gregory_fleischer-attacking_tor.pdf
 
+
+Are scoped sessions light weight enough to create one in a function
+call per thread?
+
+Does python have a more precise float other than float?
+
+Refactor learn and identify_from to work in the new model module.
+
