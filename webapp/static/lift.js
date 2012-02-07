@@ -64,8 +64,8 @@
 	whorls.timezone = (new Date()).getTimezoneOffset();
 	whorls.screen = screen;
 	whorls.cookiesenabled = navigator.cookieEnabled;
-	whorls.localstorage = !!localStorage;
-	whorls.sessionstorage = !!sessionStorage;
+	whorls.localstorage = !!window.localStorage;
+	whorls.sessionstorage = !!window.sessionStorage;
     };
 
     window.bigbrother = {};
