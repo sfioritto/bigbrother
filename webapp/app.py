@@ -1,4 +1,5 @@
 import web
+import model
 import os
 import json
 import Image
@@ -22,10 +23,10 @@ class Learn:
     def POST(self):
 
         partial = json.loads(web.data())
-        rawdata = build_raw_data(partial)
-        identity = get_user(partial["username"])
-        whorls = create_get_whorls(rawdata)
-        learn(whorls, identity)
+        rawdata = model.build_raw_data(partial)
+        identity = model.get_user(partial["username"])
+        whorls = model.create_get_whorls(rawdata)
+        model.learn(whorls, identity)
         web.ctx.db.commit()
         
         return ""
@@ -36,8 +37,8 @@ class Identify:
     def POST(self):
         
         partial = json.loads(web.data()) # as in a partial fingerprint
-        rawdata = build_raw_data(partial)
-        whorls = get_whorls(rawdata)
+        rawdata = model.build_raw_data(partial)
+        whorls = model.get_whorls(rawdata)
         identity = identify_from(whorls)
         web.header('Content-Type', 'text/html');
 
