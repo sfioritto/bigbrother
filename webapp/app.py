@@ -4,7 +4,7 @@ import os
 import json
 import Image
 import StringIO
-
+from orm import Session
 
 urls = (
     '/learn', 'Learn',
@@ -23,11 +23,11 @@ class Learn:
     def POST(self):
 
         partial = json.loads(web.data())
-        rawdata = model.build_raw_data(partial)
+        rawdata = model.build_raw_data(partial, web.ctx)
         identity = model.get_user(partial["username"])
         whorls = model.create_get_whorls(rawdata)
         model.learn(whorls, identity)
-        web.ctx.db.commit()
+        Session.commit()
         
         return ""
     
@@ -37,9 +37,9 @@ class Identify:
     def POST(self):
         
         partial = json.loads(web.data()) # as in a partial fingerprint
-        rawdata = model.build_raw_data(partial)
+        rawdata = model.build_raw_data(partial, web.ctx)
         whorls = model.get_whorls(rawdata)
-        identity = identify_from(whorls)
+        identity = model.identify_from(whorls)
         web.header('Content-Type', 'text/html');
 
         if identity:

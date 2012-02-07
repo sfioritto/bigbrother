@@ -6,24 +6,24 @@ from operator import mul
 from collections import defaultdict
 
 
-def build_raw_data(partial):
+def build_raw_data(partial, ctx):
 
         rawdata = []
         rawdata.extend(partial.items())
 
         httpheaders = []
-        for key, value in web.ctx.environ.items():
+        for key, value in ctx.environ.items():
             if key.startswith("HTTP_"):
                 httpheaders.append((key, value))
         rawdata.extend(httpheaders)
-        rawdata.append(("IP_ADDR", web.ctx.ip))
+        rawdata.append(("IP_ADDR", ctx.ip))
 
         return rawdata
 
 
 def get_whorls(rawdata):
 
-    db = web.ctx.db
+    db = Session()
     whorls = []
     hashes = [hashed for key, value, hashed in create_hashes(dict(rawdata))]
     whorls = db.query(Whorl).\
@@ -49,7 +49,7 @@ def get_whorls(rawdata):
 def create_get_whorls(rawdata):
         
     whorls = []
-    db = web.ctx.db
+    db = Session()
 
     for key, value, hashed in create_hashes(dict(rawdata)):
         try:
@@ -100,7 +100,7 @@ def learn(whorls, identity):
     and identity.
     """
 
-    db = web.ctx.db
+    db = Session()
     identity.count = identity.count + 1
     total_visits = db.query(Stat).filter_by(key="total_visits").one()
     total_visits.value = total_visits.value + 1
@@ -122,7 +122,7 @@ def learn(whorls, identity):
 
 
 def get_user(username):
-    db = web.ctx.db
+    db = Session()
     try:
         return db.query(Identity).filter_by(username=username).one()
     except NoResultFound:
@@ -138,7 +138,7 @@ def stats_obj(db):
                 
 def identify_from(whorls):
 
-    db = web.ctx.db
+    db = Session()
     stats = stats_obj(db)
     minprob = float(1) / stats["total_visits"]
     whorl_hashes = list(set([whorl.hashed for whorl in whorls]))
