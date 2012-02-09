@@ -1,4 +1,18 @@
 import bigbrother.webapp.model as model
+from bigbrother.scripts import createdb, dropdb
+from nose.tools import with_setup
+from bigbrother.webapp.orm import Session
+
+def teardown():
+    db = Session()
+    db.commit()
+    dropdb.run()
+    createdb.run()
+
+
+def setup():
+    pass
+
 
 def test_build_raw_data():
     environ = {"HTTP_test": "lolz",
@@ -9,15 +23,23 @@ def test_build_raw_data():
     assert rd["part"] == "one"
     assert rd["HTTP_test"] == "lolz"
     assert not rd.has_key("fake")
+    return rd
 
+    
 def test_get_whorls():
+    rd = test_build_raw_data()
     test_create_get_whorls() #creates some whorls to get
-    assert False
+    whorls = model.get_whorls(rd)
+    assert len(whorls) == 3
+    
 
+@with_setup(setup, teardown)
 def test_create_get_whorls():
-    assert False
-
-
+    rd = test_build_raw_data()
+    whorls = model.create_get_whorls(rd)
+    assert len(whorls) == 3
+    
+    
 def test_create_hashes():
 
     whorls = {
@@ -38,3 +60,17 @@ def test_create_hashes():
     assert hashes["dict:9:deep"] == "6"
     
 
+def test_learn():
+    assert False
+
+
+def test_get_user():
+    assert False
+
+
+def test_stats_obj():
+    assert False
+
+
+def test_identify_from():
+    assert False
