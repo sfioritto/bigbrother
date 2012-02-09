@@ -23,7 +23,7 @@ class Learn:
     def POST(self):
 
         partial = json.loads(web.data())
-        rawdata = model.build_raw_data(partial, web.ctx)
+        rawdata = model.build_raw_data(partial, web.ctx.environ, web.ctx.ip)
         identity = model.get_user(partial["username"])
         whorls = model.create_get_whorls(rawdata)
         model.learn(whorls, identity)
@@ -36,8 +36,8 @@ class Identify:
 
     def POST(self):
         
-        partial = json.loads(web.data()) # as in a partial fingerprint
-        rawdata = model.build_raw_data(partial, web.ctx)
+        partial = json.loads(web.data()).items() # as in a partial fingerprint
+        rawdata = model.build_raw_data(partial, web.ctx.environ, web.ctx.ip)
         whorls = model.get_whorls(rawdata)
         identity = model.identify_from(whorls)
         web.header('Content-Type', 'text/html');

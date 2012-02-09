@@ -6,17 +6,16 @@ from operator import mul
 from collections import defaultdict
 
 
-def build_raw_data(partial, ctx):
+def build_raw_data(partial, environ, ip):
 
-        rawdata = []
-        rawdata.extend(partial.items())
+        rawdata = dict(partial)
 
-        httpheaders = []
-        for key, value in ctx.environ.items():
+        httpheaders = {}
+        for key, value in environ.items():
             if key.startswith("HTTP_"):
-                httpheaders.append((key, value))
-        rawdata.extend(httpheaders)
-        rawdata.append(("IP_ADDR", ctx.ip))
+                httpheaders[key] = value
+        rawdata.update(httpheaders)
+        rawdata["IP_ADDR"] = ip
 
         return rawdata
 
@@ -25,7 +24,7 @@ def get_whorls(rawdata):
 
     db = Session()
     whorls = []
-    hashes = [hashed for key, value, hashed in create_hashes(dict(rawdata))]
+    hashes = [hashed for key, value, hashed in create_hashes(rawdata)]
     whorls = db.query(Whorl).\
         filter(Whorl.hashed.in_(hashes)).\
         all()
@@ -51,7 +50,7 @@ def create_get_whorls(rawdata):
     whorls = []
     db = Session()
 
-    for key, value, hashed in create_hashes(dict(rawdata)):
+    for key, value, hashed in create_hashes(rawdata):
         try:
             whorl = db.query(Whorl).filter_by(hashed=hashed).one()
 
@@ -70,7 +69,8 @@ def create_hashes(whorls, prefix=None):
     hashes = []
 
     for key, value in whorls.items():
-                    
+
+	key = str(key) #these are always strings at the moment, but just in case.
         if prefix:
             key = prefix + ":" + key
 
