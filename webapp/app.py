@@ -24,7 +24,7 @@ class Learn:
 
         partial = json.loads(web.data())
         rawdata = model.build_raw_data(partial, web.ctx.environ, web.ctx.ip)
-        identity = model.get_user(partial["username"])
+        identity = model.create_user(partial["name"])
         whorls = model.create_get_whorls(rawdata)
         model.learn(whorls, identity)
         Session.commit()
@@ -43,7 +43,7 @@ class Identify:
         web.header('Content-Type', 'text/html');
 
         if identity:
-            return identity.username
+            return identity.name
         else:
             return "I dunno."
 

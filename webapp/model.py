@@ -8,16 +8,16 @@ from collections import defaultdict
 
 def build_raw_data(partial, environ, ip):
 
-        rawdata = dict(partial)
+	rawdata = dict(partial)
 
-        httpheaders = {}
-        for key, value in environ.items():
-            if key.startswith("HTTP_"):
-                httpheaders[key] = value
-        rawdata.update(httpheaders)
-        rawdata["IP_ADDR"] = ip
+	httpheaders = {}
+	for key, value in environ.items():
+		if key.startswith("HTTP_"):
+			httpheaders[key] = value
+	rawdata.update(httpheaders)
+	rawdata["IP_ADDR"] = ip
 
-        return rawdata
+	return rawdata
 
 
 def get_whorls(rawdata):
@@ -93,6 +93,28 @@ def create_hashes(whorls, prefix=None):
     return hashes
 
 
+def get_whorl_identities(whorls, identity):
+
+	db = Session()
+
+	wis = []
+	for whorl in whorls:
+		try:
+			wi = db.query(WhorlIdentity).\
+				filter_by(whorl_hashed=whorl.hashed).\
+				filter_by(identity_id=identity.id).\
+				one()
+            
+		except NoResultFound:
+			wi = WhorlIdentity(whorl_hashed=whorl.hashed,
+								identity_id = identity.id)
+			db.add(wi)
+			db.flush()
+		wis.append(wi)
+
+	return wis
+
+
 def learn(whorls, identity):
     
     """
@@ -107,29 +129,19 @@ def learn(whorls, identity):
 
     for whorl in whorls:
         whorl.count = whorl.count + 1
-        try:
-            wgi = db.query(WhorlIdentity).\
-                filter_by(whorl_hashed=whorl.hashed).\
-                filter_by(identity_id=identity.id).\
-                one()
-            wgi.count = wgi.count + 1
-            
-        except NoResultFound:
-            wgi = WhorlIdentity(whorl_hashed=whorl.hashed,
-                                     identity_id = identity.id)
-            db.add(wgi)
-            db.flush()
 
+	for wi in get_whorl_identities(whorls, identity):
+		wi.count = wi.count + 1
 
-def get_user(username):
-    db = Session()
-    try:
-        return db.query(Identity).filter_by(username=username).one()
-    except NoResultFound:
-        identity = Identity(username=username)
-        db.add(identity)
-        db.flush()
-        return identity
+	db.commit()
+		
+
+def create_identity(name):
+	db = Session()
+	identity = Identity(name=name)
+	db.add(identity)
+	db.flush()
+	return identity
 
 
 def stats_obj(db):

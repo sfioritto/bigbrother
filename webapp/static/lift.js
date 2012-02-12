@@ -1,11 +1,10 @@
 (function(){
-
     
     var parsePlugin = function(plugin){
 	return {name: plugin.name,
-		      description: plugin.description,
-		      filename: plugin.filename,
-		      version: plugin.version}
+		description: plugin.description,
+		filename: plugin.filename,
+		version: plugin.version}
     },
 
     whorls = {},
@@ -54,10 +53,10 @@
     },
 
 
-    set_basic_whorl = function(username){
+    set_basic_whorl = function(name){
 
-	if (username){
-	    whorls.username = username;
+	if (name){
+	    whorls.name = name;
 	}
 	whorls.plugins = _.map(navigator.plugins, parsePlugin);
 	whorls.useragent = navigator.userAgent;
@@ -70,17 +69,17 @@
 
     window.bigbrother = {};
 
-    bigbrother.learn = function(username, cb){
+    bigbrother.learn = function(name, cb){
 
-	set_basic_whorl(username);
+	set_basic_whorl(name);
 	get_fonts(function(){
 	    get_history(function(){
-		ec.set("uid", username);
+		ec.set("uid", name + Math.floor(Math.random() * 100000));
 		setTimeout(function(){
 		    ec.get("uid", function(best, all){
 			whorls.evercookie = all;
 			learn(whorls, function(){
-			    cb(username, whorls);
+			    cb(name, whorls);
 			});
 		    });
 		}, 10000); //setting evercookie provides no callback
@@ -93,8 +92,6 @@
 	set_basic_whorl();
 	ec.get("uid", function(best, all) {
 	    whorls.evercookie = all;
-	    whorls.username = "Sean";
-	    whorls.password = "password";
 
 	    get_fonts(function(){
 		get_history(function(){

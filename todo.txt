@@ -15,3 +15,8 @@ Does python have a more precise float other than float?
 
 Refactor learn and identify_from to work in the new model module.
 
+Add time period -- people more likely to come back in the same time
+period
+
+Need to weight stuff like IP and evercookie appropriately
+

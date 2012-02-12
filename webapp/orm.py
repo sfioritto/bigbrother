@@ -21,7 +21,7 @@ class Stat(Base):
 class Identity(Base):
     __tablename__ = 'identities'
     id = Column(Integer, primary_key=True)
-    username = Column(String(500), unique=True)
+    name = Column(String(500))
     whorl_identities = relationship("WhorlIdentity", backref="identity")
     count = Column(Integer, default=0)
 

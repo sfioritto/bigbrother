@@ -31,6 +31,7 @@ def test_get_whorls():
     test_create_get_whorls() #creates some whorls to get
     whorls = model.get_whorls(rd)
     assert len(whorls) == 3
+    return whorls
     
 
 @with_setup(setup, teardown)
@@ -38,6 +39,7 @@ def test_create_get_whorls():
     rd = test_build_raw_data()
     whorls = model.create_get_whorls(rd)
     assert len(whorls) == 3
+    return whorls
     
     
 def test_create_hashes():
@@ -60,17 +62,44 @@ def test_create_hashes():
     assert hashes["dict:9:deep"] == "6"
     
 
-def test_learn():
-    assert False
+@with_setup(setup, teardown)
+def test_learn(identity=None, whorls=None):
+	whorls = test_create_get_whorls()
+	identity = identity or test_create_identity()
+	model.learn(whorls, identity)
+	for whorl in whorls:
+		assert whorl.count >= 1, "Count is actually %s" % whorl.count
+
+	return whorls, identity
 
 
-def test_get_user():
-    assert False
+@with_setup(setup, teardown)
+def test_create_identity():
+	u1 = model.create_identity("sean fioritto")
+	assert u1.name == "sean fioritto", "expected 'sean fioritto', name is actually %s" % u1.name
+	u2 = model.create_identity("sean fioritto")
+	assert u2.id > u1.id, "expected id to be less than %s, id is actually" % (u1.id, u2.id)
+	return u2
 
 
 def test_stats_obj():
-    assert False
+	stats = model.stats_obj(Session())
+	assert stats["total_visits"] == 0
 
 
+@with_setup(setup, teardown)
 def test_identify_from():
-    assert False
+
+	whorls, identity1 = test_learn()
+	whorls, identity2 = test_learn()
+	whorls, identity2 = test_learn(identity2, whorls)
+	assert model.identify_from(whorls) is identity2
+	assert model.identify_from(whorls) is not identity1
+	
+
+@with_setup(setup, teardown)
+def test_get_whorl_identities():
+	
+	whorls, identity = test_learn()
+	wis = model.get_whorl_identities(whorls, identity)
+	assert len(wis) == 3
