@@ -1,8 +1,14 @@
 #!./env/bin/python
 
 import bigbrother.config as config
-import bigbrother.webapp.models as models
+import bigbrother.webapp.orm as orm
 from sqlalchemy import create_engine
 
-engine = create_engine(config.dbconnection)
-models.Base.metadata.drop_all(engine)
+def run():
+    engine = create_engine(config.dbconnection)
+    orm.Base.metadata.drop_all(engine)
+    session = orm.Session()
+    session.close()
+
+if __name__ == "__main__":
+    run()

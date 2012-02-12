@@ -1,13 +1,19 @@
 #!./env/bin/python
 
 import bigbrother.config as config
-import bigbrother.webapp.models as models
+import bigbrother.webapp.orm as orm
 from sqlalchemy import create_engine
 
-engine = create_engine(config.dbconnection)
-models.Base.metadata.create_all(engine)
+def run():
+    engine = create_engine(config.dbconnection)
+    orm.Base.metadata.create_all(engine)
 
-session = models.Session()
-total_visits = models.Stat(key="total_visits")
-session.add(total_visits)
-session.commit()
+    session = orm.Session()
+    total_visits = orm.Stat(key="total_visits")
+    session.add(total_visits)
+    session.commit()
+    session.close()
+
+
+if __name__ == "__main__":
+    run()
