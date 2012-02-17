@@ -11,3 +11,7 @@ handlers:
 libraries:
 - name: PIL
   version: "latest"
+- name: WebApp2
+  version: "2.3"
+- name: yaml
+  version: "3.10"
