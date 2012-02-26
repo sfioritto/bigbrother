@@ -24,7 +24,7 @@ class Learn:
 
         partial = json.loads(web.data())
         rawdata = model.build_raw_data(partial, web.ctx.environ, web.ctx.ip)
-        identity = model.create_user(partial["name"])
+        identity = model.create_identity(partial["name"])
         whorls = model.create_get_whorls(rawdata)
         model.learn(whorls, identity)
         Session.commit()
