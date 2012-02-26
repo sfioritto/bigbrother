@@ -31,7 +31,7 @@ def test_get_whorls():
     rd = test_build_raw_data()
     test_create_get_whorls() #creates some whorls to get
     whorls = model.get_whorls(rd)
-    assert len(whorls) == 3
+    assert len(whorls) == 4
     return whorls
     
 
@@ -39,7 +39,7 @@ def test_get_whorls():
 def test_create_get_whorls():
     rd = test_build_raw_data()
     whorls = model.create_get_whorls(rd)
-    assert len(whorls) == 3
+    assert len(whorls) == 4
     return whorls
     
     
@@ -103,7 +103,7 @@ def test_get_whorl_identities():
 	
 	whorls, identity = test_learn()
 	wis = model.get_whorl_identities(whorls, identity)
-	assert len(wis) == 3
+	assert len(wis) == 4
 
 
 @with_setup(setup, teardown)

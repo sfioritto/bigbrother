@@ -124,7 +124,7 @@ def learn(whorls, identity):
 
     db = Session()
     identity.count = identity.count + 1
-    total_visits = db.query(Stat).filter_by(name="total_visits").one()
+    total_visits = db.query(Stat).filter_by(key="total_visits").one()
     total_visits.value = total_visits.value + 1
 
     for whorl in whorls:
