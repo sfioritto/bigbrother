@@ -1,0 +1,17 @@
+application: bigbrother
+version: 1
+runtime: python27
+api_version: 1
+threadsafe: true
+
+handlers:
+- url: /.*
+  script: appeng.app
+
+libraries:
+- name: PIL
+  version: "latest"
+- name: WebApp2
+  version: "2.3"
+- name: yaml
+  version: "3.10"
