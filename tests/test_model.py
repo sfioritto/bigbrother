@@ -105,13 +105,3 @@ def test_get_whorl_identities():
 	wis = model.get_whorl_identities(whorls, identity)
 	assert len(wis) == 4
 
-
-@with_setup(setup, teardown)
-def test_create_user():
-	rd = test_build_raw_data()
-	user = model.create_user(rd["name"])
-	user2 = model.create_user(rd["name"])
-	assert user.id != user2.id
-	assert user.name == rd["name"]
-	assert user2.name == rd["name"]
-	return user
