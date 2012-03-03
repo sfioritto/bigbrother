@@ -16,10 +16,13 @@ class Whorl(db.Model):
     """
     The key will be a string, which will be hashed.
     """
+    hashed = db.StringProperty()
     name = db.StringProperty()
     value = db.StringProperty(multiline=True)
     count = db.IntegerProperty(default=0)
 
 
-class Top(db.Model):
-    pass
+class WhorlToId(db.Model):
+    idkey = db.StringProperty()
+
+

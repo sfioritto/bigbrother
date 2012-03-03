@@ -99,7 +99,9 @@ class TestModels(object):
         whorls, identity1 = self.test_learn()
         whorls, identity2 = self.test_learn()
         whorls, identity2 = self.test_learn(identity2, whorls)
-        assert model.identify_from(whorls) is identity2
+
+        result = model.identify_from(whorls)
+        assert result.key() == identity2.key(), "oops. identity is actually %s, not %s" % (result.key(), identity2.key())
         assert model.identify_from(whorls) is not identity1
 	
         

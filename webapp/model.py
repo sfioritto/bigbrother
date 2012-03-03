@@ -4,7 +4,7 @@ from sqlalchemy.orm.exc import NoResultFound
 from sqlalchemy.sql.expression import asc
 from operator import mul
 from collections import defaultdict
-from bigbrother.webapp.db import Stat, Whorl, Top, Identity
+from bigbrother.webapp.db import Stat, Whorl, Identity, WhorlToId
 from google.appengine.ext import db
 
 def build_raw_data(partial, environ, ip):
@@ -23,12 +23,9 @@ def build_raw_data(partial, environ, ip):
 
 def get_whorls(rawdata):
 
-    db = Session()
     whorls = []
-    hashes = [hashed for key, value, hashed in create_hashes(rawdata)]
-    whorls = db.query(Whorl).\
-        filter(Whorl.hashed.in_(hashes)).\
-        all()
+    keys = [db.Key.from_path("Whorl", hashed) for key, value, hashed in create_hashes(rawdata)]
+    whorls = [w for w in db.get(keys) if w]
 
     #TODO: if the number of users grows large, we need to limit
     # the whorls we consider, because otherwise the set of users we need
@@ -52,26 +49,18 @@ def create_get_whorls(rawdata):
 
     for name, value, hashed in create_hashes(rawdata):
 
-        top = get_top()
-
-        whorl = db.get(db.Key.from_path("Top", "top", "Whorl", hashed))
+        whorl = db.get(db.Key.from_path("Whorl", hashed))
 
         if not whorl:
-            whorl = Whorl(key_name=hashed, name=name, value=value)
+            whorl = Whorl(key_name=hashed,
+                          hashed=hashed,
+                          name=name,
+                          value=value)
             whorl.put()
             
         whorls.append(whorl)
 
     return whorls
-
-
-def get_top():
-
-    top = db.get(db.Key.from_path("Top", "top"))
-    if not top:
-        top = Top(key_name="top")
-        top.put()
-    return top
 
 
 def create_hashes(whorls, prefix=None):
@@ -115,16 +104,27 @@ def get_whorl_identities(whorls, identity):
               for whorl in whorls]
     
     wids = dict(zip(keys, db.get([key for id, whorl, key in keys])))
-    
+
     for (id, whorl, key), wid in wids.items():
         if not wid:
             wid = Whorl(parent=id,
-                          key_name=whorl.key().name(),
-                          name=whorl.name,
-                          value=whorl.value)
-            wid.put()
+                        hashed = whorl.hashed,
+                        name=whorl.name,
+                        value=whorl.value)
             wids[(id, whorl, key)] = wid
-            
+
+    # create whorl -> ids
+    idws = []
+    for whorl in whorls:
+        idw = db.get(db.Key.from_path("Whorl", whorl.key().name(), "WhorlToId", str(identity.key())))
+        if not idw:
+            idw = WhorlToId(parent=whorl,
+                            idkey=str(identity.key()))
+            idws.append(idw)
+
+    db.put(idws)
+    db.put(wids.values())
+
     return wids.values()
 
 
@@ -142,9 +142,12 @@ def learn(whorls, identity):
     for whorl in whorls:
         whorl.count = whorl.count + 1
 
-    for wi in get_whorl_identities(whorls, identity):
+    wids = get_whorl_identities(whorls, identity)
+    for wi in wids:
         wi.count = wi.count + 1
 
+    db.put(wids + whorls)
+    identity.put()
     total_visits.put()
         
 
@@ -167,29 +170,49 @@ def stats_obj():
                 
 def identify_from(whorls):
 
-    db = Session()
     stats = stats_obj()
     minprob = float(1) / stats["total_visits"]
-    whorl_hashes = list(set([whorl.hashed for whorl in whorls]))
+    whorl_hashes = list(set([whorl.key().name() for whorl in whorls]))
+
+    # 1. get the identities from the whorls
+    # 2. get the probabilities of the whorls given the identity
+    # 3. Use that to create a list of p(i)p(w | i)
+
+
+    ids = db.get(list(set([wtid.idkey for wtid in WhorlToId.all().ancestor(whorl.key()).run()
+                   for whorl in whorls])))
+    
+    whorls = []
+    for identity in ids:
+        for w in Whorl.all().ancestor(identity).run():
+            if w.hashed in whorl_hashes:
+                whorls.append(w)
+
+
+    whorlprobs = defaultdict(lambda : defaultdict(lambda : minprob))
+    for whorl in whorls:
+        whorlprobs[whorl.parent()][whorl.key()] =\
+            min(1, float(whorl.count) / whorl.parent().count)
 
     # this is a dictionary of dictionaries. The inner dictionaries
     # contain probabilities of the whorl given the user.
-    whorlids = defaultdict(lambda : defaultdict(lambda : minprob))
-    for wid in db.query(WhorlIdentity).\
-        filter(WhorlIdentity.whorl_hashed.in_(whorl_hashes)).\
-        all():
+#    whorlids =defaultdict(lambda : defaultdict(lambda : minprob))
+#    for wid in db.query(WhorlIdentity).\
+#        filter(WhorlIdentity.whorl_hashed.in_(whorl_hashes)).\
+#        all():
 
-        whorlids[wid.identity][wid.whorl_hashed] =\
-            min(1, float(wid.count) / wid.identity.count)
+#        whorlids[wid.identity][wid.whorl_hashed] =\
+#            min(1, float(wid.count) / wid.identity.count)
 
     # The probabilities above are then used to create a list
     # of probabilities per user for every whorl passed in.
     # The inner dictionary above defaults to a reasonable
     # minimum if we've never seen a whorl for a given user
     givenid = defaultdict(list)
-    for identity, idprobs in whorlids.items():
+    for identity, probs in whorlprobs.items():
         for whorl in whorls:
-            givenid[identity].append(idprobs[whorl.hashed])
+            givenid[identity].append(probs[whorl.key()])
+            
 
     # These are all the probabilities put into a list of tuples so
     # it can be sorted by probability.
@@ -199,7 +222,7 @@ def identify_from(whorls):
 
                # identity id as a tie breaker in sorting. this is arbitrary. If there
                # is a tie, we just guess. could put a random number here I suppose.
-               identity.id,\
+               identity.key(),\
 
                # the identity tied to this probability.
                identity) \
