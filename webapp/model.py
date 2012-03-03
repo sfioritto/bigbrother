@@ -124,7 +124,7 @@ def learn(whorls, identity):
 
     identity.count = identity.count + 1
     query = Stat.all()
-    query.filter("key =", "total_visits")
+    query.filter("name =", "total_visits")
     total_visits = query.fetch(1)[0]
     total_visits.value = total_visits.value + 1
     

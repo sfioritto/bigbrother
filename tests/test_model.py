@@ -3,7 +3,7 @@ from google.appengine.ext import testbed
 from google.appengine.ext import db
 from google.appengine.datastore import datastore_stub_util
 from nose.tools import with_setup
-
+from bigbrother.webapp.db import Stat
 
 class TestModels(object):
     
@@ -11,12 +11,18 @@ class TestModels(object):
         self.testbed = testbed.Testbed()
         self.testbed.activate()
         policy = datastore_stub_util.PseudoRandomHRConsistencyPolicy(probability=0)
-        self.testbed.init_datastore_v3_stub(consistency_policy=policy)    
+        self.testbed.init_datastore_v3_stub(consistency_policy=policy)
+        total_stats = Stat(name="total_visits",
+                            value=1)
+        db.get(total_stats.key()) # this makes it available immediately to global queries
+        
         
     def teardown(self):
         self.testbed.deactivate()
 
+
     def test_build_raw_data(self):
+        
         environ = {"HTTP_test": "lolz",
                    "fake": "oops"}
         partial = {"part": "one",
