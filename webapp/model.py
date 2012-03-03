@@ -1,23 +1,23 @@
-from orm import Whorl, Session, WhorlIdentity, Identity, Stat
+from orm import Whorl, Session, WhorlIdentity, Identity
 from hashlib import sha512
 from sqlalchemy.orm.exc import NoResultFound
 from sqlalchemy.sql.expression import asc
 from operator import mul
 from collections import defaultdict
-
+from bigbrother.webapp.db import Stat
 
 def build_raw_data(partial, environ, ip):
 
-	rawdata = dict(partial)
+    rawdata = dict(partial)
 
-	httpheaders = {}
-	for key, value in environ.items():
-		if key.startswith("HTTP_"):
-			httpheaders[key] = value
-	rawdata.update(httpheaders)
-	rawdata["IP_ADDR"] = ip
+    httpheaders = {}
+    for key, value in environ.items():
+        if key.startswith("HTTP_"):
+            httpheaders[key] = value
+    rawdata.update(httpheaders)
+    rawdata["IP_ADDR"] = ip
 
-	return rawdata
+    return rawdata
 
 
 def get_whorls(rawdata):
@@ -70,10 +70,10 @@ def create_hashes(whorls, prefix=None):
 
     for key, value in whorls.items():
 
-	key = str(key) #these are always strings at the moment, but just in case.
+        key = str(key) #these are always strings at the moment, but just in case.
         if prefix:
             key = prefix + ":" + key
-
+            
         if type(value) == dict:
             hashes.extend(create_hashes(value, prefix=key))            
             
@@ -85,7 +85,7 @@ def create_hashes(whorls, prefix=None):
             
             if type(value) != unicode:
                 value = unicode(value)
-
+                
             hashes.append((key,
                             value,
                             sha512((key + value).encode("utf-8")).hexdigest()))
@@ -95,24 +95,24 @@ def create_hashes(whorls, prefix=None):
 
 def get_whorl_identities(whorls, identity):
 
-	db = Session()
+    db = Session()
 
-	wis = []
-	for whorl in whorls:
-		try:
-			wi = db.query(WhorlIdentity).\
-				filter_by(whorl_hashed=whorl.hashed).\
-				filter_by(identity_id=identity.id).\
-				one()
+    wis = []
+    for whorl in whorls:
+        try:
+            wi = db.query(WhorlIdentity).\
+                filter_by(whorl_hashed=whorl.hashed).\
+                filter_by(identity_id=identity.id).\
+                one()
             
-		except NoResultFound:
-			wi = WhorlIdentity(whorl_hashed=whorl.hashed,
-								identity_id = identity.id)
-			db.add(wi)
-			db.flush()
-		wis.append(wi)
+        except NoResultFound:
+            wi = WhorlIdentity(whorl_hashed=whorl.hashed,
+                                identity_id = identity.id)
+            db.add(wi)
+            db.flush()
+        wis.append(wi)
 
-	return wis
+    return wis
 
 
 def learn(whorls, identity):
@@ -122,26 +122,28 @@ def learn(whorls, identity):
     and identity.
     """
 
-    db = Session()
     identity.count = identity.count + 1
-    total_visits = db.query(Stat).filter_by(key="total_visits").one()
+    query = Stat.all()
+    query.filter("key =", "total_visits")
+    total_visits = query.fetch(1)[0]
     total_visits.value = total_visits.value + 1
-
+    
     for whorl in whorls:
         whorl.count = whorl.count + 1
 
-	for wi in get_whorl_identities(whorls, identity):
-		wi.count = wi.count + 1
+    for wi in get_whorl_identities(whorls, identity):
+        wi.count = wi.count + 1
 
-	db.commit()
-		
+    total_visits.put()
+    db.commit()
+        
 
 def create_identity(name):
-	db = Session()
-	identity = Identity(name=name)
-	db.add(identity)
-	db.flush()
-	return identity
+    db = Session()
+    identity = Identity(name=name)
+    db.add(identity)
+    db.flush()
+    return identity
 
 
 def stats_obj(db):
