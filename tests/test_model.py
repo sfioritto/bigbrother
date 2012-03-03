@@ -81,7 +81,7 @@ class TestModels(object):
         u1 = model.create_identity("sean fioritto")
         assert u1.name == "sean fioritto", "expected 'sean fioritto', name is actually %s" % u1.name
         u2 = model.create_identity("sean fioritto")
-        assert u2.id > u1.id, "expected id to be less than %s, id is actually" % (u1.id, u2.id)
+        assert u2.key() != u1.key(), "expected key to be different than %s, key is actually" % (u1.key(), u2.key())
         return u2
 
 

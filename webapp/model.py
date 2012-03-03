@@ -1,10 +1,10 @@
-from orm import Whorl, Session, WhorlIdentity, Identity
+from orm import Session, WhorlIdentity
 from hashlib import sha512
 from sqlalchemy.orm.exc import NoResultFound
 from sqlalchemy.sql.expression import asc
 from operator import mul
 from collections import defaultdict
-from bigbrother.webapp.db import Stat, Whorl, Top
+from bigbrother.webapp.db import Stat, Whorl, Top, Identity
 from google.appengine.ext import db
 
 def build_raw_data(partial, environ, ip):
@@ -105,24 +105,27 @@ def create_hashes(whorls, prefix=None):
 
 def get_whorl_identities(whorls, identity):
 
-    db = Session()
+    """
+    Future me, enjoy debugging this one.
+    """
 
-    wis = []
-    for whorl in whorls:
-        try:
-            wi = db.query(WhorlIdentity).\
-                filter_by(whorl_hashed=whorl.hashed).\
-                filter_by(identity_id=identity.id).\
-                one()
+    keys = [(identity,
+              whorl,
+              db.Key.from_path("Identity", str(identity.key()), "Whorl", whorl.key().name()))
+              for whorl in whorls]
+    
+    wids = dict(zip(keys, db.get([key for id, whorl, key in keys])))
+    
+    for (id, whorl, key), wid in wids.items():
+        if not wid:
+            wid = Whorl(parent=id,
+                          key_name=whorl.key().name(),
+                          name=whorl.name,
+                          value=whorl.value)
+            wid.put()
+            wids[(id, whorl, key)] = wid
             
-        except NoResultFound:
-            wi = WhorlIdentity(whorl_hashed=whorl.hashed,
-                                identity_id = identity.id)
-            db.add(wi)
-            db.flush()
-        wis.append(wi)
-
-    return wis
+    return wids.values()
 
 
 def learn(whorls, identity):
@@ -146,10 +149,8 @@ def learn(whorls, identity):
         
 
 def create_identity(name):
-    db = Session()
     identity = Identity(name=name)
-    db.add(identity)
-    db.flush()
+    identity.put()
     return identity
 
 
