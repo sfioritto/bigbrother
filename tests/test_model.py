@@ -65,6 +65,7 @@ class TestModels(object):
         assert hashes["dict:5"] == "6"
         assert hashes["dict:7"] == "8"
         assert hashes["dict:9:deep"] == "6"
+        
     
     def test_learn(self, identity=None, whorls=None):
         whorls = self.test_create_get_whorls()

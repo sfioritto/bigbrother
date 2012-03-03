@@ -4,7 +4,7 @@ from sqlalchemy.orm.exc import NoResultFound
 from sqlalchemy.sql.expression import asc
 from operator import mul
 from collections import defaultdict
-from bigbrother.webapp.db import Stat
+from bigbrother.webapp.db import Stat, Whorl, Top
 from google.appengine.ext import db
 
 def build_raw_data(partial, environ, ip):
@@ -49,20 +49,29 @@ def get_whorls(rawdata):
 def create_get_whorls(rawdata):
         
     whorls = []
-    db = Session()
 
-    for key, value, hashed in create_hashes(rawdata):
-        try:
-            whorl = db.query(Whorl).filter_by(hashed=hashed).one()
+    for name, value, hashed in create_hashes(rawdata):
 
-        except NoResultFound:
-            whorl = Whorl(hashed=hashed, key=key, value=value)
-            db.add(whorl)
-            db.flush()
+        top = get_top()
+
+        whorl = db.get(db.Key.from_path("Top", "top", "Whorl", hashed))
+
+        if not whorl:
+            whorl = Whorl(key_name=hashed, name=name, value=value)
+            whorl.put()
             
         whorls.append(whorl)
 
     return whorls
+
+
+def get_top():
+
+    top = db.get(db.Key.from_path("Top", "top"))
+    if not top:
+        top = Top(key_name="top")
+        top.put()
+    return top
 
 
 def create_hashes(whorls, prefix=None):
