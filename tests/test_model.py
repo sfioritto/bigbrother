@@ -12,9 +12,7 @@ class TestModels(object):
         self.testbed.activate()
         policy = datastore_stub_util.PseudoRandomHRConsistencyPolicy(probability=0)
         self.testbed.init_datastore_v3_stub(consistency_policy=policy)
-        total_stats = Stat(name="total_visits",
-                            value=1)
-        db.get(total_stats.key()) # this makes it available immediately to global queries
+        stats = model.stats_obj()#setup stat obj
         
         
     def teardown(self):
@@ -87,8 +85,12 @@ class TestModels(object):
 
 
     def test_stats_obj(self):
-        stats = model.stats_obj(Session())
+        stats = model.stats_obj()
         assert stats["total_visits"] == 0
+        
+        self.test_learn()
+        stats = model.stats_obj()
+        assert stats["total_visits"] == 1
 
 
     def test_identify_from(self):

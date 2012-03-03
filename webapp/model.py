@@ -5,6 +5,7 @@ from sqlalchemy.sql.expression import asc
 from operator import mul
 from collections import defaultdict
 from bigbrother.webapp.db import Stat
+from google.appengine.ext import db
 
 def build_raw_data(partial, environ, ip):
 
@@ -123,9 +124,7 @@ def learn(whorls, identity):
     """
 
     identity.count = identity.count + 1
-    query = Stat.all()
-    query.filter("name =", "total_visits")
-    total_visits = query.fetch(1)[0]
+    total_visits = Stat.get(db.Key.from_path("Stat", "statsobj"))
     total_visits.value = total_visits.value + 1
     
     for whorl in whorls:
@@ -135,7 +134,6 @@ def learn(whorls, identity):
         wi.count = wi.count + 1
 
     total_visits.put()
-    db.commit()
         
 
 def create_identity(name):
@@ -146,14 +144,21 @@ def create_identity(name):
     return identity
 
 
-def stats_obj(db):
-    return dict([(s.key, s.value) for s in db.query(Stat).all()])
+def stats_obj():
+    
+    stat = db.get(db.Key.from_path("Stat", "statsobj"))
+    if not stat:
+        stat = Stat(key_name="statsobj", name="total_visits", value=0)
+        stat.put()
+        
+    return dict([(stat.name, stat.value)])
+
 
                 
 def identify_from(whorls):
 
     db = Session()
-    stats = stats_obj(db)
+    stats = stats_obj()
     minprob = float(1) / stats["total_visits"]
     whorl_hashes = list(set([whorl.hashed for whorl in whorls]))
 
