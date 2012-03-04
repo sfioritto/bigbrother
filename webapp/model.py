@@ -158,9 +158,9 @@ def stats_obj():
     
     stat = db.get(db.Key.from_path("Stat", "statsobj"))
     if not stat:
-        stat = Stat(key_name="statsobj", name="total_visits", value=0)
+        stat = Stat(key_name="statsobj", name="total_visits", value=1)
         stat.put()
-        
+
     return dict([(stat.name, stat.value)])
 
 

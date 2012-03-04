@@ -5,8 +5,13 @@ api_version: 1
 threadsafe: true
 
 handlers:
+
+- url: /static
+  static_dir: webapp/static
+
 - url: /.*
   script: appeng.app
+
 
 libraries:
 - name: PIL

@@ -6,11 +6,11 @@ import PIL.Image as Image
 import StringIO
 
 
-class Learn:
+class Learn(webapp2.RequestHandler):
     
     def post(self):
 
-        partial = self.request
+        partial = json.loads(self.request.body)
         rawdata = model.build_raw_data(partial, self.request.environ, self.request.remote_addr)
         identity = model.create_user(partial["name"])
         whorls = model.create_get_whorls(rawdata)
@@ -19,11 +19,11 @@ class Learn:
         return ""
     
 
-class Identify:
+class Identify(webapp2.RequestHandler):
 
     def post(self):
         
-        partial = self.request.items() # as in a partial fingerprint
+        partial = json.loads(self.request.body)
         rawdata = model.build_raw_data(partial, self.request.environ, self.request.remote_addr)
         whorls = model.get_whorls(rawdata)
         identity = model.identify_from(whorls)
@@ -35,7 +35,7 @@ class Identify:
             return "I dunno."
 
 
-class EvercookieCache:
+class EvercookieCache(webapp2.RequestHandler):
 
     def get(self):
         """
@@ -55,7 +55,7 @@ class EvercookieCache:
 
 
 
-class EvercookiePng:
+class EvercookiePng(webapp2.RequestHandler):
     
     def get(self):
         """
@@ -84,7 +84,7 @@ class EvercookiePng:
             self.abort(304)
 
 
-class EvercookieEtag:
+class EvercookieEtag(webapp2.RequestHandler):
 
     def get(self):
         
