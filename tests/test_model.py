@@ -95,10 +95,11 @@ class TestModels(object):
 
 
     def test_identify_from(self):
-        
+
         whorls, identity1 = self.test_learn()
         whorls, identity2 = self.test_learn()
-        whorls, identity2 = self.test_learn(identity2, whorls)
+        for x in range(10000):
+            whorls, identity2 = self.test_learn(identity2, whorls)
 
         result = model.identify_from(whorls)
         assert result.key() == identity2.key(), "oops. identity is actually %s, not %s" % (result.key(), identity2.key())

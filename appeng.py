@@ -10,8 +10,8 @@ class Learn:
     
     def post(self):
 
-        partial = json.loads(web.data())
-        rawdata = model.build_raw_data(partial, web.ctx.environ, web.ctx.ip)
+        partial = self.request
+        rawdata = model.build_raw_data(partial, self.request.environ, self.request.remote_addr)
         identity = model.create_user(partial["name"])
         whorls = model.create_get_whorls(rawdata)
         model.learn(whorls, identity)
@@ -23,11 +23,11 @@ class Identify:
 
     def post(self):
         
-        partial = json.loads(web.data()).items() # as in a partial fingerprint
-        rawdata = model.build_raw_data(partial, web.ctx.environ, web.ctx.ip)
+        partial = self.request.items() # as in a partial fingerprint
+        rawdata = model.build_raw_data(partial, self.request.environ, self.request.remote_addr)
         whorls = model.get_whorls(rawdata)
         identity = model.identify_from(whorls)
-        web.header('Content-Type', 'text/html');
+        self.response.headers['Content-Type'] = 'text/html'
 
         if identity:
             return identity.name
@@ -43,15 +43,15 @@ class EvercookieCache:
         """
         
         try:
-            web.header('Content-Type', 'image/png');
-            web.header('Last-Modified', 'Wed, 30 Jun 2010 21:36:48 GMT');
-            web.header('Expires', 'Tue, 31 Dec 2030 23:30:45 GMT');
-            web.header('Cache-Control', 'private, max-age=630720000');
-            return web.cookies().evercookie_cache
+            self.response.headers['Content-Type'] = 'image/png'
+            self.response.headers['Last-Modified'] = 'Wed, 30 Jun 2010 21:36:48 GMT'
+            self.response.headers['Expires'] = 'Tue, 31 Dec 2030 23:30:45 GMT'
+            self.response.headers['Cache-Control'] = 'private, max-age=630720000'
+            return self.cookies.get("evercookie_cache")
         #no cookie
         except:
-            web.header('Content-Type', 'image/png');
-            raise web.notmodified()
+            self.response.headers['Content-Type'] = 'image/png'
+            self.abort(304)
 
 
 
@@ -63,17 +63,17 @@ class EvercookiePng:
         """
 
         try:
-            ec_png = web.cookies().evercookie_png
+            ec_png = self.cookies.get("evercookie_png")
             rgb = tuple([ord(x) for x in ec_png])
             i = Image.new("RGB", (200, 1))
             px = i.load()
             px[0, 0] = rgb
             sio = StringIO.StringIO()
             i.save(sio, "PNG")
-            web.header('Content-Type', 'image/png');
-            web.header('Last-Modified', 'Wed, 30 Jun 2010 21:36:48 GMT');
-            web.header('Expires', 'Tue, 31 Dec 2030 23:30:45 GMT');
-            web.header('Cache-Control', 'private, max-age=630720000');
+            self.response.headers['Content-Type'] = 'image/png'
+            self.response.headers['Last-Modified'] = 'Wed, 30 Jun 2010 21:36:48 GMT'
+            self.response.headers['Expires'] = 'Tue, 31 Dec 2030 23:30:45 GMT'
+            self.response.headers['Cache-Control'] = 'private, max-age=630720000'
 
             return sio.getvalue()
 
@@ -81,7 +81,7 @@ class EvercookiePng:
         except Exception as e:
 
             #no cookie found, force a read from the cache
-            raise web.notmodified()
+            self.abort(304)
 
 
 class EvercookieEtag:
@@ -93,14 +93,14 @@ class EvercookieEtag:
         """
 
         etag = ""
-        web.header('Content-Type', 'text/html');
+        self.response.headers['Content-Type'] = 'text/html'
         try:
-            web.header('Etag', web.cookies().evercookie_etag)
+            self.response.headers['Etag'] = self.cookies.get("evercookie_eta")
             return ""
         
         except:
-            if web.ctx.environ.has_key("HTTP_IF_NONE_MATCH"):
-                etag = web.ctx.environ["HTTP_IF_NONE_MATCH"]
+            if self.request.environ.has_key("HTTP_IF_NONE_MATCH"):
+                etag = self.request.environ["HTTP_IF_NONE_MATCH"]
 
         return etag
 
