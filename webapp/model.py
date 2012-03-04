@@ -1,7 +1,4 @@
-from orm import Session, WhorlIdentity
 from hashlib import sha512
-from sqlalchemy.orm.exc import NoResultFound
-from sqlalchemy.sql.expression import asc
 from operator import mul
 from collections import defaultdict
 from bigbrother.webapp.db import Stat, Whorl, Identity, WhorlToId

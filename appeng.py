@@ -2,7 +2,7 @@ import webapp2
 import webapp.model as model
 import os
 import json
-import Pil.Image as Image
+import PIL.Image as Image
 import StringIO
 
 
