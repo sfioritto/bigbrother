@@ -1,7 +1,7 @@
 from hashlib import sha512
 from operator import mul
 from collections import defaultdict
-from bigbrother.webapp.db import Stat, Whorl, Identity, WhorlToId
+from webapp.db import Stat, Whorl, Identity, WhorlToId
 from google.appengine.ext import db
 
 def build_raw_data(partial, environ, ip):
@@ -133,7 +133,7 @@ def learn(whorls, identity):
     """
 
     identity.count = identity.count + 1
-    total_visits = Stat.get(db.Key.from_path("Stat", "statsobj"))
+    total_visits = get_create_stat()
     total_visits.value = total_visits.value + 1
     
     for whorl in whorls:
@@ -154,13 +154,17 @@ def create_identity(name):
     return identity
 
 
-def stats_obj():
-    
+def get_create_stat():
     stat = db.get(db.Key.from_path("Stat", "statsobj"))
     if not stat:
         stat = Stat(key_name="statsobj", name="total_visits", value=1)
         stat.put()
+    return stat
 
+    
+def stats_obj():
+    
+    stat = get_create_stat
     return dict([(stat.name, stat.value)])
 
 
@@ -176,8 +180,11 @@ def identify_from(whorls):
     # 3. Use that to create a list of p(i)p(w | i)
 
 
-    ids = db.get(list(set([wtid.idkey for wtid in WhorlToId.all().ancestor(whorl.key()).run()
-                   for whorl in whorls])))
+    idkeys = []
+    for whorl in whorls:
+        idkeys += [wtid.idkey for wtid in WhorlToId.all().ancestor(whorl.key()).run()]
+        
+    ids = db.get(list(set(idkeys)))
     
     whorls = []
     for identity in ids:
@@ -225,7 +232,7 @@ def identify_from(whorls):
                identity) \
                
                for identity, idprobs in givenid.items()]
-
+    
     probs.sort()
     return probs[-1][2] # the most likely identity (third element is the identity)
 

@@ -87,19 +87,18 @@ class TestModels(object):
 
     def test_stats_obj(self):
         stats = model.stats_obj()
-        assert stats["total_visits"] == 0
+        assert stats["total_visits"] == 1
         
         self.test_learn()
         stats = model.stats_obj()
-        assert stats["total_visits"] == 1
+        assert stats["total_visits"] == 2
 
 
     def test_identify_from(self):
 
         whorls, identity1 = self.test_learn()
         whorls, identity2 = self.test_learn()
-        for x in range(10000):
-            whorls, identity2 = self.test_learn(identity2, whorls)
+        whorls, identity2 = self.test_learn(identity2, whorls)
 
         result = model.identify_from(whorls)
         assert result.key() == identity2.key(), "oops. identity is actually %s, not %s" % (result.key(), identity2.key())

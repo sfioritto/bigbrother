@@ -1,4 +1,3 @@
-import bigbrother.config as config
 from google.appengine.ext import db
 
     

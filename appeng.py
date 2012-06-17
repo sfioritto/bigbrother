@@ -9,10 +9,10 @@ import StringIO
 class Learn(webapp2.RequestHandler):
     
     def post(self):
-
+        import pdb; pdb.set_trace()
         partial = json.loads(self.request.body)
         rawdata = model.build_raw_data(partial, self.request.environ, self.request.remote_addr)
-        identity = model.create_user(partial["name"])
+        identity = model.create_identity(partial["name"])
         whorls = model.create_get_whorls(rawdata)
         model.learn(whorls, identity)
         
@@ -94,7 +94,9 @@ class EvercookieEtag(webapp2.RequestHandler):
 
         etag = ""
         self.response.headers['Content-Type'] = 'text/html'
+        print self.response.headers
         try:
+            print self.cookies
             self.response.headers['Etag'] = self.cookies.get("evercookie_eta")
             return ""
         
