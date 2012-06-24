@@ -9,7 +9,6 @@ import StringIO
 class Learn(webapp2.RequestHandler):
     
     def post(self):
-        import pdb; pdb.set_trace()
         partial = json.loads(self.request.body)
         rawdata = model.build_raw_data(partial, self.request.environ, self.request.remote_addr)
         identity = model.create_identity(partial["name"])
@@ -47,7 +46,7 @@ class EvercookieCache(webapp2.RequestHandler):
             self.response.headers['Last-Modified'] = 'Wed, 30 Jun 2010 21:36:48 GMT'
             self.response.headers['Expires'] = 'Tue, 31 Dec 2030 23:30:45 GMT'
             self.response.headers['Cache-Control'] = 'private, max-age=630720000'
-            return self.cookies.get("evercookie_cache")
+            return self.request.cookies.get("evercookie_cache")
         #no cookie
         except:
             self.response.headers['Content-Type'] = 'image/png'
@@ -63,7 +62,7 @@ class EvercookiePng(webapp2.RequestHandler):
         """
 
         try:
-            ec_png = self.cookies.get("evercookie_png")
+            ec_png = self.request.cookies.get("evercookie_png")
             rgb = tuple([ord(x) for x in ec_png])
             i = Image.new("RGB", (200, 1))
             px = i.load()
@@ -94,10 +93,9 @@ class EvercookieEtag(webapp2.RequestHandler):
 
         etag = ""
         self.response.headers['Content-Type'] = 'text/html'
-        print self.response.headers
+
         try:
-            print self.cookies
-            self.response.headers['Etag'] = self.cookies.get("evercookie_eta")
+            self.response.headers['Etag'] = self.request.cookies.get("evercookie_eta")
             return ""
         
         except:
